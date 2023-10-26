@@ -1,6 +1,0 @@
-Dependencies for Project 'STM32G474', Target 'MCT_Px': (DO NOT MODIFY !)
-CompilerVersion: 5060960::V5.06 update 7 (build 960)::ARMCC
-F (.\startup_stm32g431xx.s)(0x653A22A3)(--cpu Cortex-M4.fp.sp -g --apcs=interwork -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536" --pd "STM32G474xx SETA 1"--list .\listings\startup_stm32g431xx.lst --xref -o .\objects\startup_stm32g431xx.o --depend .\objects\startup_stm32g431xx.d)
-F (.\main.s)(0x653A22DF)(--cpu Cortex-M4.fp.sp -g --apcs=interwork -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536" --pd "STM32G474xx SETA 1"--list .\listings\main.lst --xref -o .\objects\main.o --depend .\objects\main.d)
-I (STM32G4xx_REG_ASM.inc)(0x653A22A3)
-F (.\STM32G4xx_REG_ASM.inc)(0x653A22A3)()
