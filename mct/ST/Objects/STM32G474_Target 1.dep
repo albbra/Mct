@@ -1,0 +1,8 @@
+Dependencies for Project 'STM32G474', Target 'Target 1': (DO NOT MODIFY !)
+CompilerVersion: 5060960::V5.06 update 7 (build 960)::ARMCC
+F (.\main.s)(0x653A2579)(--cpu Cortex-M4.fp.sp -g --apcs=interwork -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536" --pd "STM32G474xx SETA 1"--list .\listings\main.lst --xref -o .\objects\main.o --depend .\objects\main.d)
+I (STM32G4xx_REG_ASM.inc)(0x653A1F49)
+F (.\STM32G4xx_REG_ASM.inc)(0x653A1F49)()
+F (.\stm32g474xx.h)(0x653A1F49)()
+F (.\startup_stm32g474xx.s)(0x653A1F49)(--cpu Cortex-M4.fp.sp -g --apcs=interwork -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536" --pd "STM32G474xx SETA 1"--list .\listings\startup_stm32g474xx.lst --xref -o .\objects\startup_stm32g474xx.o --depend .\objects\startup_stm32g474xx.d)
+F (.\delay.s)(0x653A1F48)(--cpu Cortex-M4.fp.sp -g --apcs=interwork -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536" --pd "STM32G474xx SETA 1"--list .\listings\delay.lst --xref -o .\objects\delay.o --depend .\objects\delay.d)
