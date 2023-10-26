@@ -2490,28 +2490,33 @@ ARM Macro Assembler    Page 39
    54 00000000         
    55 00000000         loop
    56 00000000         
-   57 00000000 F04F 0854       ldr              R8, =0x54   ; Lade 54h in Regis
-                                                            ter
-   58 00000004 F108 0801       add              R8, #1      ; Inkrementiere Reg
-                                                            ister
-   59 00000008 EA4F 0848       lsl              R8, #1      ; Logisches Schiebe
-                                                            n um ein Bit nach l
-                                                            inks
-   60 0000000C F008 080F       and              R8, #0x0F   ; binaeres UND mit 
-                                                            0Fh
-   61 00000010 F048 0805       orr              R8, #0x05   ; binaeres ODER mit
-                                                             05h
-   62 00000014 F108 0802       add              R8, #2      ; Increment
-   63 00000018         
-   64 00000018         
-   65 00000018         
-   66 00000018         ; wiederholter Anwendungscode
-   67 00000018         
-   68 00000018 E7F2            B                loop
-   69 0000001A         
-   70 0000001A                 ENDP
-   71 0000001A         
-   72 0000001A                 END
+   57 00000000         ;ldr R8, =0x54 ; Lade 54h in Register
+   58 00000000         ;add R8, #1 ; Inkrementiere Register
+   59 00000000         ;lsl R8, #1 ; Logisches Schieben um ein Bit nach links
+   60 00000000         ;and R8, #0x0F ; binaeres UND mit 0Fh
+   61 00000000         ;orr R8, #0x05 ; binaeres ODER mit 05h
+   62 00000000         ;add R8, #2 ; Increment
+   63 00000000         
+   64 00000000 F04F 0900       mov              R9, #0      ; Clear Register
+   65 00000004 F04F 4A00       ldr              R10, =0x80000000
+   66 00000008 EB1A 0B09       adds             R11, R10, R9 ; Addiere 8000:000
+                                                            0h zum Register
+   67 0000000C EB1B 0B0A       adds             R11, R11, R10 ; Addiere 8000:00
+                                                            00h zum Register
+   68 00000010 EB5B 0B0A       adcs             R11, R11, R10 ; Addiere 8000:00
+                                                            00h zum Register
+   69 00000014 EB5B 0B0A       adcs             R11, R11, R10 ; Addiere 8000:00
+                                                            00h zum Register
+   70 00000018 EB1B 0B0A       adds             R11, R11, R10 ; Addiere 8000:00
+                                                            00h zum Register
+   71 0000001C         
+   72 0000001C         ; wiederholter Anwendungscode
+   73 0000001C         
+   74 0000001C E7F0            B                loop
+   75 0000001E         
+   76 0000001E                 ENDP
+   77 0000001E         
+   78 0000001E                 END
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp.sp --apcs=
 interwork --depend=.\objects\main.d -o.\objects\main.o -IC:\Keil_v5\ARM\PACK\Ke
 il\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include -IC:\Keil_v5\A
@@ -2529,7 +2534,7 @@ Symbol: loop
    Definitions
       At line 55 in file main.s
    Uses
-      At line 68 in file main.s
+      At line 74 in file main.s
 Comment: loop used once
 main 00000000
 
