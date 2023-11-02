@@ -75,18 +75,20 @@ main  PROC
 loop 
     ; Schalten der LEDs
 	ldr  R0, =GPIOA_ODR
+	orr  LEDS, LEDS, #1
 	str  LEDS, [R0]
 
 	; Schieben der LEDs
-    lsl  LEDS, LEDS, #1
+    lsl  LEDS, LEDS, #1	
 	cmp  LEDS, #0x100
 	bne  weiter
-	mov  LEDS, #0x01  ; und wieder von vorne
+	
+	; und wieder von vorne
+	mov  LEDS, #0x01
+	
 weiter	
-
     mov r0, #500
 	bl  up_delay
-
 
     B	loop	
 	
