@@ -171,8 +171,8 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 
 	; Spiegeln 
     MOV R7, LEDS3  
-	LSL R7, R7, #4 
-	LSR LEDS3, LEDS3, #4 
+	LSL R7, R7, #1 
+	LSR LEDS3, LEDS3, #1 
 	ORR LEDS3, LEDS3, R7 
 	
 	mov r0, #500
