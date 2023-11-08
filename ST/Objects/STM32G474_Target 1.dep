@@ -1,6 +1,6 @@
 Dependencies for Project 'STM32G474', Target 'Target 1': (DO NOT MODIFY !)
 CompilerVersion: 6190000::V6.19::ARMCLANG
-F (.\main.s)(0x654B59D0)(--cpu Cortex-M4.fp.sp -g --diag_suppress=A1950W-ID:\Keil\Pack\Keil\STM32G4xx_DFP\1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include--pd "__UVISION_VERSION SETA 538"--pd "STM32G474xx SETA 1"--list .\listings\main.lst--xref -o .\objects\main.o--depend .\objects\main.d)
+F (.\main.s)(0x654BAE95)(--cpu Cortex-M4.fp.sp -g --diag_suppress=A1950W-ID:\Keil\Pack\Keil\STM32G4xx_DFP\1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include--pd "__UVISION_VERSION SETA 538"--pd "STM32G474xx SETA 1"--list .\listings\main.lst--xref -o .\objects\main.o--depend .\objects\main.d)
 I (STM32G4xx_REG_ASM.inc)(0x6136145A)
 F (.\STM32G4xx_REG_ASM.inc)(0x6136145A)()
 F (.\stm32g474xx.h)(0x5FF06ECE)()

@@ -115,6 +115,10 @@ button1_pressed ; Taster 1 ist gedrückt
 	orr  LEDS, LEDS, #1
 	str  LEDS, [R0]
 
+	; 100ms warten
+	mov r0, #100
+	bl  up_delay
+
 	; Schieben der LEDs
 	lsl  LEDS, LEDS, #1
 	;cmp  LEDS, #0xFF alt
@@ -129,7 +133,7 @@ button1_pressed ; Taster 1 ist gedrückt
 	B	loop
 	
 weiter1	
-    mov r0, #500
+    mov r0, #200 ; 200ms warten
 	bl  up_delay
 
     B	button1_pressed
@@ -140,6 +144,10 @@ button2_pressed ; Taster 2 ist gedrückt
 	ldr  R0, =GPIOA_ODR
 	orr  LEDS2, LEDS2, #0x80
 	str  LEDS2, [R0]
+
+	; 100ms warten
+	mov r0, #100
+	bl  up_delay
 
 	; Schieben der LEDs
 	lsr  LEDS2, LEDS2, #1
@@ -155,7 +163,7 @@ button2_pressed ; Taster 2 ist gedrückt
 	B	loop
 	
 weiter2	
-    mov r0, #500
+    mov r0, #200 ; 200ms warten
 	bl  up_delay
 
     B	button2_pressed
@@ -165,6 +173,10 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 	ldr  R0, =GPIOA_ODR
 	orr  LEDS3, LEDS3, #0x18
 	str  LEDS3, [R0]
+	
+	; 100ms warten
+	mov r0, #100
+	bl  up_delay
 	
 	; Schieben zum spiegeln
 	LSL LEDS3, LEDS3, #1
@@ -188,7 +200,7 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 	B	loop
 
 weiter3	
-    mov r0, #500
+    mov r0, #200 ; 200ms warten
 	bl  up_delay
 
     B	both_buttons_pressed
