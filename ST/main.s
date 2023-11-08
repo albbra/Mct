@@ -76,7 +76,8 @@ main  PROC
     and R1, R1, R2          ; Bits [0:1] = 00 => Input Mode
     str R1, [R0]	
 	
-    mov  LEDS, #0x01   ; Initialwert der LEDs 00000001
+	; Initialwert der LEDs
+    mov  LEDS, #0x01   ; 00000001
 	mov  LEDS2, #0x80  ; 10000000
 	mov	 LEDS3, #0x18  ; 00011000
 
@@ -116,11 +117,12 @@ button1_pressed ; Taster 1 ist gedrückt
 
 	; Schieben der LEDs
 	lsl  LEDS, LEDS, #1
-	cmp  LEDS, #0x100
-	bne  weiter1
+	;cmp  LEDS, #0xFF alt
+	;bne  weiter1
+	BCC  weiter1 ; Carry Flag 1 wenn 1 1111 1111
 	mov  LEDS, #0x01  ; und wieder von vorne
 
-	ADD R3, R3, #1      
+	ADD R3, R3, #1 ; Wiederholungszähler
     CMP R3, #5          
     BNE button1_pressed 
 
@@ -141,11 +143,12 @@ button2_pressed ; Taster 2 ist gedrückt
 
 	; Schieben der LEDs
 	lsr  LEDS2, LEDS2, #1
-	cmp  LEDS2, #0x00
-	bne  weiter2
+	;cmp  LEDS2, #0xFF
+	;bne  weiter2
+	BCC  weiter2 ; Carry Flag 1 wenn 1 1111 1111
 	mov  LEDS2, #0x80  ; und wieder von vorne
 
-	ADD R3, R3, #1      
+	ADD R3, R3, #1  ; Wiederholungszähler
     CMP R3, #5          
     BNE button2_pressed 
 
@@ -165,28 +168,30 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 	
 	; Schieben zum spiegeln
 	LSL LEDS3, LEDS3, #1
-
-	cmp  LEDS3, #0xF1    
-    beq  wiederholen   
-
+ 
 	; Spiegeln 
     MOV R7, LEDS3  
 	LSL R7, R7, #1 
 	LSR LEDS3, LEDS3, #1 
 	ORR LEDS3, LEDS3, R7 
 	
-	mov r0, #500
-	bl  up_delay
+	; Vergleich zum weiterschieben
+	;cmp  LEDS3, #0xFF
+	;bne  weiter3
+	BCC  weiter3 ; Carry Flag 1 wenn 1 1111 1111
+	mov  LEDS3, #0x18  ; und wieder von vorne
 
-	ADD R3, R3, #1      
+	ADD R3, R3, #1 ; Wiederholungszähler
     CMP R3, #5          
     BNE both_buttons_pressed 
 
 	B	loop
-	
-wiederholen
-	mov  LEDS3, #0x18  ; und wieder von vorne
-	B both_buttons_pressed
+
+weiter3	
+    mov r0, #500
+	bl  up_delay
+
+    B	both_buttons_pressed
 
 	ENDP				
     END
