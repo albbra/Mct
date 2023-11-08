@@ -115,68 +115,65 @@ button1_pressed ; Taster 1 ist gedrückt
 	orr  LEDS, LEDS, #1
 	str  LEDS, [R0]
 
+	; Schieben der LEDs
+	lsl  LEDS, LEDS, #1
+
 	; 100ms warten
 	mov r0, #100
 	bl  up_delay
 
-	; Schieben der LEDs
-	lsl  LEDS, LEDS, #1
-	;cmp  LEDS, #0xFF alt
-	;bne  weiter1
-	BCC  weiter1 ; Carry Flag 1 wenn 1 1111 1111
+	BCC  button1_pressed ; button1_pressed loop wenn Carry Flag 0
+	
+	; wenn carry Flag 1 dann
+	mov r0, #200 ; 200ms warten
+	bl  up_delay
+	
 	mov  LEDS, #0x01  ; und wieder von vorne
 
 	ADD R3, R3, #1 ; Wiederholungszähler
     CMP R3, #5          
     BNE button1_pressed 
 
+	mov  R3, #1 
+
 	B	loop
 	
-weiter1	
-    mov r0, #200 ; 200ms warten
-	bl  up_delay
-
-    B	button1_pressed
-	
-	
+;#################################
 button2_pressed ; Taster 2 ist gedrückt
 ; Schalten der LEDs
 	ldr  R0, =GPIOA_ODR
 	orr  LEDS2, LEDS2, #0x80
 	str  LEDS2, [R0]
 
+	; Schieben der LEDs
+	lsr  LEDS2, LEDS2, #1
+
 	; 100ms warten
 	mov r0, #100
 	bl  up_delay
-
-	; Schieben der LEDs
-	lsr  LEDS2, LEDS2, #1
-	;cmp  LEDS2, #0xFF
-	;bne  weiter2
-	BCC  weiter2 ; Carry Flag 1 wenn 1 1111 1111
+	
+	cmp  LEDS2, #0xFF
+	bne  button2_pressed 
+	
+	mov r0, #200 ; 200ms warten
+	bl  up_delay
+	
 	mov  LEDS2, #0x80  ; und wieder von vorne
 
 	ADD R3, R3, #1  ; Wiederholungszähler
     CMP R3, #5          
     BNE button2_pressed 
 
-	B	loop
+	mov  R3, #1 
 	
-weiter2	
-    mov r0, #200 ; 200ms warten
-	bl  up_delay
+	B	loop
 
-    B	button2_pressed
-
+;#################################
 both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 ; Schalten der LEDs
 	ldr  R0, =GPIOA_ODR
 	orr  LEDS3, LEDS3, #0x18
 	str  LEDS3, [R0]
-	
-	; 100ms warten
-	mov r0, #100
-	bl  up_delay
 	
 	; Schieben zum spiegeln
 	LSL LEDS3, LEDS3, #1
@@ -187,23 +184,25 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 	LSR LEDS3, LEDS3, #1 
 	ORR LEDS3, LEDS3, R7 
 	
+	; 100ms warten
+	mov r0, #100
+	bl  up_delay
+	
 	; Vergleich zum weiterschieben
-	;cmp  LEDS3, #0xFF
-	;bne  weiter3
-	BCC  weiter3 ; Carry Flag 1 wenn 1 1111 1111
+	BCC  both_buttons_pressed ; Carry Flag 0 wenn 0 1111 1111
+	
+	mov r0, #200 ; 200ms warten
+	bl  up_delay
+	
 	mov  LEDS3, #0x18  ; und wieder von vorne
 
 	ADD R3, R3, #1 ; Wiederholungszähler
     CMP R3, #5          
-    BNE both_buttons_pressed 
+    BNE both_buttons_pressed
+
+	mov  R3, #1 
 
 	B	loop
-
-weiter3	
-    mov r0, #200 ; 200ms warten
-	bl  up_delay
-
-    B	both_buttons_pressed
 
 	ENDP				
     END
