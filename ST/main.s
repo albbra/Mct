@@ -79,12 +79,16 @@ main  PROC
 	; Initialwert der LEDs
     mov  LEDS, #0x01   ; 00000001
 	mov  LEDS2, #0x80  ; 10000000
-	mov	 LEDS3, #0x18  ; 00011000
+	mov	 LEDS3, #0x18  ; 00011000 
+	ldr R9 , =0x1FE
+	
 
 ;#################################
 ; Endlosschleife
 loop 
-
+	
+	;b button1_pressed
+	
     LDR R0, =GPIOC_IDR ; Lesen des Ports C
     LDR R1, [R0]
     AND R1, R1, #0x1   ; Maskierung des Bits 0
@@ -112,20 +116,21 @@ loop
 button1_pressed ; Taster 1 ist gedrückt
 	; Schalten der LEDs
 	ldr  R0, =GPIOA_ODR
+	
 	orr  LEDS, LEDS, #1
 	str  LEDS, [R0]
 
-	; Schieben der LEDs
-	lsl  LEDS, LEDS, #1
-
 	; 100ms warten
-	mov r0, #100
+	mov r8, #400
 	bl  up_delay
 
-	BCC  button1_pressed ; button1_pressed loop wenn Carry Flag 0
+	; Schieben der LEDs
+	lsls  LEDS, LEDS, #1
 	
-	; wenn carry Flag 1 dann
-	mov r0, #200 ; 200ms warten
+	cmp LEDS, R9 ; R9 = 0x1FE
+	BNE button1_pressed
+	
+	mov r8, #800 ; 200ms warten
 	bl  up_delay
 	
 	mov  LEDS, #0x01  ; und wieder von vorne
