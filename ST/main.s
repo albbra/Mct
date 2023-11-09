@@ -89,27 +89,41 @@ loop
 	
 	;b button1_pressed
 	
-    LDR R0, =GPIOC_IDR ; Lesen des Ports C
-    LDR R1, [R0]
-    AND R1, R1, #0x1   ; Maskierung des Bits 0
-    CMP R1, #0x1       ; Ist Bit PC0 gesetzt?
-    BEQ button1_pressed
+    ;LDR R0, =GPIOC_IDR ; Lesen des Ports C
+    ;LDR R1, [R0]
+    ;AND R1, R1, #0x1   ; Maskierung des Bits 0
+    ;CMP R1, #0x1       ; Ist Bit PC0 gesetzt?
+    ;BEQ button1_pressed
 	
-	LDR R0, =GPIOC_IDR
-    LDR R1, [R0]
-    AND R1, R1, #0x2   ; Masking bit 1 (PC1)
-    CMP R1, #0x2       ; Is bit PC1 set?
-    BEQ button2_pressed
+	;LDR R0, =GPIOC_IDR
+    ;LDR R1, [R0]
+    ;AND R1, R1, #0x2   ; Masking bit 1 (PC1)
+    ;CMP R1, #0x2       ; Is bit PC1 set?
+    ;BEQ button2_pressed
 	
-	LDR R0, =GPIOC_IDR
-    LDR R1, [R0]
-    AND R1, R1, #0x3   ; Maskierung der Bits 0 und 1 (PC0 und PC1)
-    CMP R1, #0x3       ; Sind beide Bits gesetzt?
-    BEQ both_buttons_pressed
-	
+	;LDR R0, =GPIOC_IDR
+    ;LDR R1, [R0]
+    ;AND R1, R1, #0x3   ; Maskierung der Bits 0 und 1 (PC0 und PC1)
+    ;CMP R1, #0x3       ; Sind beide Bits gesetzt?
+    ;BEQ button1_pressed
+
 	; wenn wir hier ankommen, wissen wir, dass
     ; kein Button gedrückt ist
+	;B	loop
+
+	LDR R0, =GPIOC_IDR ; Lesen des Ports C
+	LDR R1, [R0]	;# Warum ließt er 0x01 aus [R0] ?
+	TST R1, #1           ; Ist Bit PC0 gesetzt?
+	BNE button1_pressed
+
+	TST R1, #2           ; Is bit PC1 set?
+	BNE button2_pressed
+
+	TST R1, #3           ; Sind beide Bits gesetzt?
+	BNE both_buttons_pressed
+
 	B	loop
+	
 
 ;#################################
 ; Buttons wurden gedrückt
@@ -145,22 +159,23 @@ button1_pressed ; Taster 1 ist gedrückt
 	
 ;#################################
 button2_pressed ; Taster 2 ist gedrückt
-; Schalten der LEDs
+	; Schalten der LEDs
 	ldr  R0, =GPIOA_ODR
+	
 	orr  LEDS2, LEDS2, #0x80
 	str  LEDS2, [R0]
 
+	; 100ms warten
+	mov r0, #400
+	bl  up_delay
+
 	; Schieben der LEDs
 	lsr  LEDS2, LEDS2, #1
-
-	; 100ms warten
-	mov r0, #100
-	bl  up_delay
 	
 	cmp  LEDS2, #0xFF
 	bne  button2_pressed 
 	
-	mov r0, #200 ; 200ms warten
+	mov r0, #800 ; 200ms warten
 	bl  up_delay
 	
 	mov  LEDS2, #0x80  ; und wieder von vorne
@@ -177,26 +192,24 @@ button2_pressed ; Taster 2 ist gedrückt
 both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 ; Schalten der LEDs
 	ldr  R0, =GPIOA_ODR
+	
 	orr  LEDS3, LEDS3, #0x18
 	str  LEDS3, [R0]
 	
-	; Schieben zum spiegeln
-	LSL LEDS3, LEDS3, #1
- 
+	; 100ms warten
+	mov r0, #400
+	bl  up_delay
+	
 	; Spiegeln 
     MOV R7, LEDS3  
 	LSL R7, R7, #1 
 	LSR LEDS3, LEDS3, #1 
 	ORR LEDS3, LEDS3, R7 
 	
-	; 100ms warten
-	mov r0, #100
-	bl  up_delay
+	cmp  LEDS3, R9
+	bne  both_buttons_pressed
 	
-	; Vergleich zum weiterschieben
-	BCC  both_buttons_pressed ; Carry Flag 0 wenn 0 1111 1111
-	
-	mov r0, #200 ; 200ms warten
+	mov r0, #800 ; 200ms warten
 	bl  up_delay
 	
 	mov  LEDS3, #0x18  ; und wieder von vorne
