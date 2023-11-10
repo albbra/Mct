@@ -86,41 +86,18 @@ main  PROC
 ;#################################
 ; Endlosschleife
 loop 
-	
-	;b button1_pressed
-	
-    ;LDR R0, =GPIOC_IDR ; Lesen des Ports C
-    ;LDR R1, [R0]
-    ;AND R1, R1, #0x1   ; Maskierung des Bits 0
-    ;CMP R1, #0x1       ; Ist Bit PC0 gesetzt?
-    ;BEQ button1_pressed
-	
-	;LDR R0, =GPIOC_IDR
-    ;LDR R1, [R0]
-    ;AND R1, R1, #0x2   ; Masking bit 1 (PC1)
-    ;CMP R1, #0x2       ; Is bit PC1 set?
-    ;BEQ button2_pressed
-	
-	;LDR R0, =GPIOC_IDR
-    ;LDR R1, [R0]
-    ;AND R1, R1, #0x3   ; Maskierung der Bits 0 und 1 (PC0 und PC1)
-    ;CMP R1, #0x3       ; Sind beide Bits gesetzt?
-    ;BEQ button1_pressed
-
-	; wenn wir hier ankommen, wissen wir, dass
-    ; kein Button gedrückt ist
-	;B	loop
 
 	LDR R0, =GPIOC_IDR ; Lesen des Ports C
-	LDR R1, [R0]	;# Warum ließt er 0x01 aus [R0] ?
-	TST R1, #1           ; Ist Bit PC0 gesetzt?
-	BNE button1_pressed
-
-	TST R1, #2           ; Is bit PC1 set?
-	BNE button2_pressed
-
+	LDR R1, [R0]	
+	
 	TST R1, #3           ; Sind beide Bits gesetzt?
-	BNE both_buttons_pressed
+	BMI both_buttons_pressed
+	
+	TST R1, #1           ; Ist Bit PC0 gesetzt?
+	BMI button1_pressed
+
+	TST R1, #2           ; Ist Bit PC1 gesetzt?
+	BMI button2_pressed
 
 	B	loop
 	

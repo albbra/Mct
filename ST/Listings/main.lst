@@ -1893,170 +1893,146 @@ ARM Macro Assembler    Page 30
    87 0000003C         ; Endlosschleife
    88 0000003C         loop
    89 0000003C         
-   90 0000003C         ;b button1_pressed
-   91 0000003C         
-   92 0000003C         ;LDR R0, =GPIOC_IDR ; Lesen des Ports C
-   93 0000003C         ;LDR R1, [R0]
-   94 0000003C         ;AND R1, R1, #0x1   ; Maskierung des Bits 0
-   95 0000003C         ;CMP R1, #0x1       ; Ist Bit PC0 gesetzt?
-   96 0000003C         ;BEQ button1_pressed
-   97 0000003C         
-   98 0000003C         ;LDR R0, =GPIOC_IDR
-   99 0000003C         ;LDR R1, [R0]
-  100 0000003C         ;AND R1, R1, #0x2   ; Masking bit 1 (PC1)
-  101 0000003C         ;CMP R1, #0x2       ; Is bit PC1 set?
-  102 0000003C         ;BEQ button2_pressed
-  103 0000003C         
-  104 0000003C         ;LDR R0, =GPIOC_IDR
-  105 0000003C         ;LDR R1, [R0]
-  106 0000003C         ;AND R1, R1, #0x3   ; Maskierung der Bits 0 und 1 (PC0 u
-                       nd PC1)
-  107 0000003C         ;CMP R1, #0x3       ; Sind beide Bits gesetzt?
-  108 0000003C         ;BEQ button1_pressed
-  109 0000003C         
-  110 0000003C         ; wenn wir hier ankommen, wissen wir, dass
-  111 0000003C         ; kein Button gedrückt ist
-  112 0000003C         ;B loop
-  113 0000003C         
-  114 0000003C 4830            LDR              R0, =GPIOC_IDR 
+   90 0000003C 4830            LDR              R0, =GPIOC_IDR 
                                                             ; Lesen des Ports C
                                                             
-  115 0000003E 6801            LDR              R1, [R0]    ;# Warum ließt er 0
-                                                            x01 aus [R0] ?
-  116 00000040 F011 0F01       TST              R1, #1      ; Ist Bit PC0 geset
-                                                            zt?
-  117 00000044 D106            BNE              button1_pressed
-  118 00000046         
-  119 00000046 F011 0F02       TST              R1, #2      ; Is bit PC1 set?
-  120 0000004A D11B            BNE              button2_pressed
-  121 0000004C         
-  122 0000004C F011 0F03       TST              R1, #3      ; Sind beide Bits g
+   91 0000003E 6801            LDR              R1, [R0]
+   92 00000040         
+   93 00000040 F011 0F03       TST              R1, #3      ; Sind beide Bits g
                                                             esetzt?
-  123 00000050 D131            BNE              both_buttons_pressed
-  124 00000052         
-  125 00000052 E7F3            B                loop
-  126 00000054         
-  127 00000054         
-  128 00000054         ;#################################
-  129 00000054         ; Buttons wurden gedrückt
-  130 00000054         button1_pressed                      ; Taster 1 ist gedr
+   94 00000044 D437            BMI              both_buttons_pressed
+   95 00000046         
+   96 00000046 F011 0F01       TST              R1, #1      ; Ist Bit PC0 geset
+                                                            zt?
+   97 0000004A D403            BMI              button1_pressed
+   98 0000004C         
+   99 0000004C F011 0F02       TST              R1, #2      ; Ist Bit PC1 geset
+                                                            zt?
+  100 00000050 D418            BMI              button2_pressed
+  101 00000052         
+  102 00000052 E7F3            B                loop
+  103 00000054         
+  104 00000054         
+  105 00000054         ;#################################
+  106 00000054         ; Buttons wurden gedrückt
+  107 00000054         button1_pressed                      ; Taster 1 ist gedr
                                                             ückt
-  131 00000054         ; Schalten der LEDs
-  132 00000054 482B            ldr              R0, =GPIOA_ODR
-  133 00000056         
-  134 00000056 F044 0401       orr              LEDS, LEDS, #1
-  135 0000005A 6004            str              LEDS, [R0]
-  136 0000005C         
-  137 0000005C         ; 100ms warten
+  108 00000054         ; Schalten der LEDs
+  109 00000054 482B            ldr              R0, =GPIOA_ODR
+  110 00000056         
+  111 00000056 F044 0401       orr              LEDS, LEDS, #1
+  112 0000005A 6004            str              LEDS, [R0]
+  113 0000005C         
+  114 0000005C         ; 100ms warten
+  115 0000005C F44F 78C8       mov              r8, #400
+  116 00000060 F7FF FFFE       bl               up_delay
+  117 00000064         
+  118 00000064         ; Schieben der LEDs
+  119 00000064 0064            lsls             LEDS, LEDS, #1
+  120 00000066         
+  121 00000066 454C            cmp              LEDS, R9    ; R9 = 0x1FE
+  122 00000068 D1F4            BNE              button1_pressed
+  123 0000006A         
+  124 0000006A F44F 7848       mov              r8, #800    ; 200ms warten
+  125 0000006E F7FF FFFE       bl               up_delay
+  126 00000072         
+  127 00000072 F04F 0401       mov              LEDS, #0x01 ; und wieder von vo
+                                                            rne
+  128 00000076         
+  129 00000076 F103 0301       ADD              R3, R3, #1  ; Wiederholungszähl
+                                                            er
+  130 0000007A 2B05            CMP              R3, #5
+  131 0000007C D1EA            BNE              button1_pressed
+  132 0000007E         
+  133 0000007E F04F 0301       mov              R3, #1
+  134 00000082         
+  135 00000082 E7DB            B                loop
+  136 00000084         
 
 
 
 ARM Macro Assembler    Page 31 
 
 
-  138 0000005C F44F 78C8       mov              r8, #400
-  139 00000060 F7FF FFFE       bl               up_delay
-  140 00000064         
-  141 00000064         ; Schieben der LEDs
-  142 00000064 0064            lsls             LEDS, LEDS, #1
-  143 00000066         
-  144 00000066 454C            cmp              LEDS, R9    ; R9 = 0x1FE
-  145 00000068 D1F4            BNE              button1_pressed
-  146 0000006A         
-  147 0000006A F44F 7848       mov              r8, #800    ; 200ms warten
-  148 0000006E F7FF FFFE       bl               up_delay
-  149 00000072         
-  150 00000072 F04F 0401       mov              LEDS, #0x01 ; und wieder von vo
-                                                            rne
-  151 00000076         
-  152 00000076 F103 0301       ADD              R3, R3, #1  ; Wiederholungszähl
-                                                            er
-  153 0000007A 2B05            CMP              R3, #5
-  154 0000007C D1EA            BNE              button1_pressed
-  155 0000007E         
-  156 0000007E F04F 0301       mov              R3, #1
-  157 00000082         
-  158 00000082 E7DB            B                loop
-  159 00000084         
-  160 00000084         ;#################################
-  161 00000084         button2_pressed                      ; Taster 2 ist gedr
+  137 00000084         ;#################################
+  138 00000084         button2_pressed                      ; Taster 2 ist gedr
                                                             ückt
-  162 00000084         ; Schalten der LEDs
-  163 00000084 481F            ldr              R0, =GPIOA_ODR
-  164 00000086         
-  165 00000086 F045 0580       orr              LEDS2, LEDS2, #0x80
-  166 0000008A 6005            str              LEDS2, [R0]
-  167 0000008C         
-  168 0000008C         ; 100ms warten
-  169 0000008C F44F 70C8       mov              r0, #400
-  170 00000090 F7FF FFFE       bl               up_delay
-  171 00000094         
-  172 00000094         ; Schieben der LEDs
-  173 00000094 EA4F 0555       lsr              LEDS2, LEDS2, #1
-  174 00000098         
-  175 00000098 2DFF            cmp              LEDS2, #0xFF
-  176 0000009A D1F3            bne              button2_pressed
-  177 0000009C         
-  178 0000009C F44F 7048       mov              r0, #800    ; 200ms warten
-  179 000000A0 F7FF FFFE       bl               up_delay
-  180 000000A4         
-  181 000000A4 F04F 0580       mov              LEDS2, #0x80 ; und wieder von v
+  139 00000084         ; Schalten der LEDs
+  140 00000084 481F            ldr              R0, =GPIOA_ODR
+  141 00000086         
+  142 00000086 F045 0580       orr              LEDS2, LEDS2, #0x80
+  143 0000008A 6005            str              LEDS2, [R0]
+  144 0000008C         
+  145 0000008C         ; 100ms warten
+  146 0000008C F44F 70C8       mov              r0, #400
+  147 00000090 F7FF FFFE       bl               up_delay
+  148 00000094         
+  149 00000094         ; Schieben der LEDs
+  150 00000094 EA4F 0555       lsr              LEDS2, LEDS2, #1
+  151 00000098         
+  152 00000098 2DFF            cmp              LEDS2, #0xFF
+  153 0000009A D1F3            bne              button2_pressed
+  154 0000009C         
+  155 0000009C F44F 7048       mov              r0, #800    ; 200ms warten
+  156 000000A0 F7FF FFFE       bl               up_delay
+  157 000000A4         
+  158 000000A4 F04F 0580       mov              LEDS2, #0x80 ; und wieder von v
                                                             orne
-  182 000000A8         
-  183 000000A8 F103 0301       ADD              R3, R3, #1  ; Wiederholungszähl
+  159 000000A8         
+  160 000000A8 F103 0301       ADD              R3, R3, #1  ; Wiederholungszähl
                                                             er
-  184 000000AC 2B05            CMP              R3, #5
-  185 000000AE D1E9            BNE              button2_pressed
-  186 000000B0         
-  187 000000B0 F04F 0301       mov              R3, #1
-  188 000000B4         
-  189 000000B4 E7C2            B                loop
-  190 000000B6         
-  191 000000B6         ;#################################
+  161 000000AC 2B05            CMP              R3, #5
+  162 000000AE D1E9            BNE              button2_pressed
+  163 000000B0         
+  164 000000B0 F04F 0301       mov              R3, #1
+  165 000000B4         
+  166 000000B4 E7C2            B                loop
+  167 000000B6         
+  168 000000B6         ;#################################
+  169 000000B6         both_buttons_pressed                 ; Taster 1 und 2 is
+                                                            t gedrückt
+  170 000000B6         ; Schalten der LEDs
+  171 000000B6 4813            ldr              R0, =GPIOA_ODR
+  172 000000B8         
+  173 000000B8 F046 0618       orr              LEDS3, LEDS3, #0x18
+  174 000000BC 6006            str              LEDS3, [R0]
+  175 000000BE         
+  176 000000BE         ; 100ms warten
+  177 000000BE F44F 70C8       mov              r0, #400
+  178 000000C2 F7FF FFFE       bl               up_delay
+  179 000000C6         
+  180 000000C6         ; Spiegeln 
+  181 000000C6 4637            MOV              R7, LEDS3
+  182 000000C8 EA4F 0747       LSL              R7, R7, #1
+  183 000000CC EA4F 0656       LSR              LEDS3, LEDS3, #1
+  184 000000D0 EA46 0607       ORR              LEDS3, LEDS3, R7
+  185 000000D4         
+  186 000000D4 454E            cmp              LEDS3, R9
+  187 000000D6 D1EE            bne              both_buttons_pressed
+  188 000000D8         
+  189 000000D8 F44F 7048       mov              r0, #800    ; 200ms warten
+  190 000000DC F7FF FFFE       bl               up_delay
+  191 000000E0         
 
 
 
 ARM Macro Assembler    Page 32 
 
 
-  192 000000B6         both_buttons_pressed                 ; Taster 1 und 2 is
-                                                            t gedrückt
-  193 000000B6         ; Schalten der LEDs
-  194 000000B6 4813            ldr              R0, =GPIOA_ODR
-  195 000000B8         
-  196 000000B8 F046 0618       orr              LEDS3, LEDS3, #0x18
-  197 000000BC 6006            str              LEDS3, [R0]
-  198 000000BE         
-  199 000000BE         ; 100ms warten
-  200 000000BE F44F 70C8       mov              r0, #400
-  201 000000C2 F7FF FFFE       bl               up_delay
-  202 000000C6         
-  203 000000C6         ; Spiegeln 
-  204 000000C6 4637            MOV              R7, LEDS3
-  205 000000C8 EA4F 0747       LSL              R7, R7, #1
-  206 000000CC EA4F 0656       LSR              LEDS3, LEDS3, #1
-  207 000000D0 EA46 0607       ORR              LEDS3, LEDS3, R7
-  208 000000D4         
-  209 000000D4 454E            cmp              LEDS3, R9
-  210 000000D6 D1EE            bne              both_buttons_pressed
-  211 000000D8         
-  212 000000D8 F44F 7048       mov              r0, #800    ; 200ms warten
-  213 000000DC F7FF FFFE       bl               up_delay
-  214 000000E0         
-  215 000000E0 F04F 0618       mov              LEDS3, #0x18 ; und wieder von v
+  192 000000E0 F04F 0618       mov              LEDS3, #0x18 ; und wieder von v
                                                             orne
-  216 000000E4         
-  217 000000E4 F103 0301       ADD              R3, R3, #1  ; Wiederholungszähl
+  193 000000E4         
+  194 000000E4 F103 0301       ADD              R3, R3, #1  ; Wiederholungszähl
                                                             er
-  218 000000E8 2B05            CMP              R3, #5
-  219 000000EA D1E4            BNE              both_buttons_pressed
-  220 000000EC         
-  221 000000EC F04F 0301       mov              R3, #1
-  222 000000F0         
-  223 000000F0 E7A4            B                loop
-  224 000000F2         
-  225 000000F2                 ENDP
-  226 000000F2                 END
+  195 000000E8 2B05            CMP              R3, #5
+  196 000000EA D1E4            BNE              both_buttons_pressed
+  197 000000EC         
+  198 000000EC F04F 0301       mov              R3, #1
+  199 000000F0         
+  200 000000F0 E7A4            B                loop
+  201 000000F2         
+  202 000000F2                 ENDP
+  203 000000F2                 END
               00 00 4002104C 
               FFFF0000 
               48000800 
@@ -2076,31 +2052,31 @@ both_buttons_pressed 000000B6
 
 Symbol: both_buttons_pressed
    Definitions
-      At line 192 in file main.s
+      At line 169 in file main.s
    Uses
-      At line 123 in file main.s
-      At line 210 in file main.s
-      At line 219 in file main.s
+      At line 94 in file main.s
+      At line 187 in file main.s
+      At line 196 in file main.s
 
 button1_pressed 00000054
 
 Symbol: button1_pressed
    Definitions
-      At line 130 in file main.s
+      At line 107 in file main.s
    Uses
-      At line 117 in file main.s
-      At line 145 in file main.s
-      At line 154 in file main.s
+      At line 97 in file main.s
+      At line 122 in file main.s
+      At line 131 in file main.s
 
 button2_pressed 00000084
 
 Symbol: button2_pressed
    Definitions
-      At line 161 in file main.s
+      At line 138 in file main.s
    Uses
-      At line 120 in file main.s
-      At line 176 in file main.s
-      At line 185 in file main.s
+      At line 100 in file main.s
+      At line 153 in file main.s
+      At line 162 in file main.s
 
 loop 0000003C
 
@@ -2108,10 +2084,10 @@ Symbol: loop
    Definitions
       At line 88 in file main.s
    Uses
-      At line 125 in file main.s
-      At line 158 in file main.s
-      At line 189 in file main.s
-      At line 223 in file main.s
+      At line 102 in file main.s
+      At line 135 in file main.s
+      At line 166 in file main.s
+      At line 200 in file main.s
 
 main 00000000
 
@@ -3159,9 +3135,9 @@ Symbol: GPIOA_ODR
    Definitions
       At line 329 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 132 in file main.s
-      At line 163 in file main.s
-      At line 194 in file main.s
+      At line 109 in file main.s
+      At line 140 in file main.s
+      At line 171 in file main.s
 
 GPIOA_OSPEEDR 48000008
 
@@ -3373,7 +3349,7 @@ Absolute symbols
 
       At line 359 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 114 in file main.s
+      At line 90 in file main.s
 Comment: GPIOC_IDR used once
 GPIOC_LCKR 4800081C
 
@@ -4847,12 +4823,12 @@ Symbol: up_delay
    Definitions
       At line 39 in file main.s
    Uses
-      At line 139 in file main.s
-      At line 148 in file main.s
-      At line 170 in file main.s
-      At line 179 in file main.s
-      At line 201 in file main.s
-      At line 213 in file main.s
+      At line 116 in file main.s
+      At line 125 in file main.s
+      At line 147 in file main.s
+      At line 156 in file main.s
+      At line 178 in file main.s
+      At line 190 in file main.s
 
 1 symbol
 622 symbols in table
