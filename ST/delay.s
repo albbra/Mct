@@ -51,7 +51,7 @@ up_delay    PROC
     PUSH   {R8, R1}
     MOV    R1, #4000
     MUL    R8, R8, R1
-	align 4
+	ALIGN 4
 loop_delay    
     SUB    R8, R8, #1
     CMP    R8, #0
