@@ -92,8 +92,8 @@ ARM Macro Assembler    Page 2
    51 00000000 E92D 0102       PUSH             {R8, R1}
    52 00000004 F44F 617A       MOV              R1, #4000
    53 00000008 FB08 F801       MUL              R8, R8, R1
-   54 0000000C         loop_delay
-   55 0000000C                 ALIGN            4
+   54 0000000C                 ALIGN            4
+   55 0000000C         loop_delay
    56 0000000C F1A8 0801       SUB              R8, R8, #1
    57 00000010 F1B8 0F00       CMP              R8, #0
    58 00000014 D1FA            BNE              loop_delay
@@ -126,7 +126,7 @@ loop_delay 0000000C
 
 Symbol: loop_delay
    Definitions
-      At line 54 in file delay.s
+      At line 55 in file delay.s
    Uses
       At line 58 in file delay.s
 Comment: loop_delay used once
