@@ -54,11 +54,14 @@ LEDS3 RN R6
 ; Einsprungpunkt		
 main  PROC
 	;#################################
-    ; Konfiguration der Portpins PA[7:0] fuer LEDs	
+    ; Aktivieren der I/O-Ports
     LDR R0, =RCC_AHB2ENR
     LDR R1, =5              ; enable Port A+C  (Bit 0 und 2)
+	LDR R2, =0x00000000		; Maskierung der I/O-Ports
+	AND R1, R1, R2
     STR R1, [R0]
 
+	; Konfiguration der Portpins PA[7:0] fuer LEDs
     LDR R0, =GPIOA_MODER
     LDR R1, [R0]            ; Reset Value for Port A =0xABFFFFFF (Alternate Functions for JTAG /SWD)
     LDR R2, =0xFFFF0000     ; Maskierung der Pins [7:0]
@@ -73,11 +76,11 @@ main  PROC
     LDR R0, =GPIOC_MODER
     LDR R1, [R0]            
     LDR R2, =0xFFFFFFF0     ; Maskierung der Bits [1:0] fuer Pin 0 und Maskierung der Bits [3:2] fuer Pin 1
-    AND R1, R1, R2          ; Bits [0:3] = 0000 => Input Mode
+    AND R1, R1, R2          ; Bits [0:3] = 00 => Input Mode
     STR R1, [R0]	
 	
 	; Initialwert der LEDs
-    MOV LEDS , #0x01   ; 00000001
+    MOV LEDS , #0x01  ; 00000001
 	MOV LEDS2, #0x80  ; 10000000
 	MOV	LEDS3, #0x18  ; 00011000 
 	
@@ -92,20 +95,20 @@ loop
 	LDR R0, =GPIOC_IDR ; Lesen des Ports C
 	LDR R1, [R0]	
 	
-	CMP R8, #3           ; Sind beide Bits gesetzt?
+	CMP R1, #3           ; Sind beide Bits gesetzt?
 	BEQ both_buttons_pressed
 	
-	TST R8, #1           ; Ist Bit PC0 gesetzt?
+	TST R1, #1           ; Ist Bit PC0 gesetzt?
 	BNE button1_pressed
 
-	TST R8, #2           ; Ist Bit PC1 gesetzt?
+	TST R1, #2           ; Ist Bit PC1 gesetzt?
 	BNE button2_pressed
 	
 	B	loop
 	
 
 ;#################################
-; Buttons wurden gedrückt
+; Buttons wurden gedrueckt
 button1_pressed ; Taster 1 ist gedrückt
 	; Schalten der LEDs
 	LDR  R0, =GPIOA_ODR
@@ -128,7 +131,7 @@ button1_pressed ; Taster 1 ist gedrückt
 	
 	MOV  LEDS, #0x01  ; und wieder von vorne
 
-	ADD  R3, R3, #1 ; Wiederholungszähler
+	ADD  R3, R3, #1 ; Wiederholungszaehler
     CMP  R3, #5          
     BNE  button1_pressed 
 
@@ -137,7 +140,7 @@ button1_pressed ; Taster 1 ist gedrückt
 	B	 loop
 	
 ;#################################
-button2_pressed ; Taster 2 ist gedrückt
+button2_pressed ; Taster 2 ist gedrueckt
 	; Schalten der LEDs
 	LDR  R0, =GPIOA_ODR
 	
@@ -159,7 +162,7 @@ button2_pressed ; Taster 2 ist gedrückt
 	
 	MOV  LEDS2, #0x80  ; und wieder von vorne
 
-	ADD  R3, R3, #1  ; Wiederholungszähler
+	ADD  R3, R3, #1  ; Wiederholungszaehler
     CMP  R3, #5          
     BNE  button2_pressed 
 
@@ -168,7 +171,7 @@ button2_pressed ; Taster 2 ist gedrückt
 	B	 loop
 
 ;#################################
-both_buttons_pressed ; Taster 1 und 2 ist gedrückt
+both_buttons_pressed ; Taster 1 und 2 ist gedrueckt
 ; Schalten der LEDs
 	LDR  R0, =GPIOA_ODR
 	
@@ -193,7 +196,7 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrückt
 	
 	MOV  LEDS3, #0x18  ; und wieder von vorne
 
-	ADD  R3, R3, #1 ; Wiederholungszähler
+	ADD  R3, R3, #1 ; Wiederholungszaehler
     CMP  R3, #5          
     BNE  both_buttons_pressed
 
