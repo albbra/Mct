@@ -57,8 +57,8 @@ main  PROC
     ; Aktivieren der I/O-Ports
     LDR R0, =RCC_AHB2ENR
     LDR R1, =5              ; enable Port A+C  (Bit 0 und 2)
-	LDR R2, =0x00000000		; Maskierung der I/O-Ports
-	AND R1, R1, R2
+	;LDR R2, =0x00000000		; Maskierung der I/O-Ports
+	;AND R1, R1, R2
     STR R1, [R0]
 
 	; Konfiguration der Portpins PA[7:0] fuer LEDs
@@ -86,23 +86,30 @@ main  PROC
 	
 	; Wert zum Vergleichen
 	LDR R9 , =0x1FE
+	LDR R10, =0x1FF
 	
 
 ;#################################
 ; Endlosschleife
 loop 
-
+	
+	
 	LDR R0, =GPIOC_IDR ; Lesen des Ports C
 	LDR R1, [R0]	
 	
-	CMP R1, #3           ; Sind beide Bits gesetzt?
+	;MOV R1, #3
+	
+	CMP R1, #0           ; Sind beide Bits gesetzt?
 	BEQ both_buttons_pressed
 	
-	TST R1, #1           ; Ist Bit PC0 gesetzt?
-	BNE button1_pressed
+	CMP R1, #2           ; Ist Bit PC0 gesetzt?
+	BEQ button1_pressed
 
-	TST R1, #2           ; Ist Bit PC1 gesetzt?
-	BNE button2_pressed
+	CMP R1, #1           ; Ist Bit PC1 gesetzt?
+	BEQ button2_pressed
+	
+	LDR  R0, =GPIOA_ODR
+	STR  R12, [R0]
 	
 	B	loop
 	
@@ -117,7 +124,7 @@ button1_pressed ; Taster 1 ist gedrückt
 	STR  LEDS, [R0]
 
 	; 100ms warten
-	MOV  R8, #400
+	MOV  R8, #100
 	BL   up_delay
 
 	; Schieben der LEDs
@@ -125,8 +132,14 @@ button1_pressed ; Taster 1 ist gedrückt
 	
 	CMP  LEDS, R9 ; R9 = 0x1FE
 	BNE  button1_pressed
+
+	MOV  R8, #100 ; 100ms warten
+	BL   up_delay
 	
-	MOV  R8, #800 ; 200ms warten
+	MOV  LEDS, #0x00
+	STR  LEDS, [R0]
+	
+	MOV  R8, #100 ; 100ms warten
 	BL   up_delay
 	
 	MOV  LEDS, #0x01  ; und wieder von vorne
@@ -135,7 +148,7 @@ button1_pressed ; Taster 1 ist gedrückt
     CMP  R3, #5          
     BNE  button1_pressed 
 
-	MOV  R3, #1 
+	MOV  R3, #0 
 
 	B	 loop
 	
@@ -148,16 +161,27 @@ button2_pressed ; Taster 2 ist gedrueckt
 	STR  LEDS2, [R0]
 
 	; 100ms warten
-	MOV  R0, #400
+	MOV  R8, #100
 	BL   up_delay
 
 	; Schieben der LEDs
 	LSR  LEDS2, LEDS2, #1
 	
-	CMP  LEDS2, #0xFF
+	CMP  LEDS2, #0x7F
 	BNE  button2_pressed 
 	
-	MOV  R0, #800 ; 200ms warten
+	LDR  R0, =GPIOA_ODR
+	
+	ORR  LEDS2, LEDS2, #0x80
+	STR  LEDS2, [R0]
+	
+	MOV  R8, #100 ; 100ms warten
+	BL   up_delay
+	
+	MOV  LEDS, #0x00
+	STR  LEDS, [R0]
+	
+	MOV  R8, #100 ; 100ms warten
 	BL   up_delay
 	
 	MOV  LEDS2, #0x80  ; und wieder von vorne
@@ -166,7 +190,7 @@ button2_pressed ; Taster 2 ist gedrueckt
     CMP  R3, #5          
     BNE  button2_pressed 
 
-	MOV  R3, #1 
+	MOV  R3, #0 
 	
 	B	 loop
 
@@ -178,8 +202,8 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrueckt
 	ORR  LEDS3, LEDS3, #0x18
 	STR  LEDS3, [R0]
 	
-	; 100ms warten
-	MOV  R0, #400
+	; 200ms warten
+	MOV  R8, #200
 	BL   up_delay
 	
 	; Spiegeln 
@@ -188,10 +212,16 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrueckt
 	LSR  LEDS3, LEDS3, #1 
 	ORR  LEDS3, LEDS3, R7 
 	
-	CMP  LEDS3, R9
+	CMP  LEDS3, R10
 	BNE  both_buttons_pressed
 	
-	MOV  R0, #800 ; 200ms warten
+	MOV  R8, #100 ; 100ms warten
+	BL   up_delay
+	
+	MOV  LEDS, #0x00
+	STR  LEDS, [R0]
+	
+	MOV  R8, #100 ; 100ms warten
 	BL   up_delay
 	
 	MOV  LEDS3, #0x18  ; und wieder von vorne
@@ -200,7 +230,7 @@ both_buttons_pressed ; Taster 1 und 2 ist gedrueckt
     CMP  R3, #5          
     BNE  both_buttons_pressed
 
-	MOV  R3, #1 
+	MOV  R3, #0 
 
 	B	 loop
 
