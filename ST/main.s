@@ -121,7 +121,7 @@ button1_pressed ; Taster 1 ist gedrückt
 	BL   up_delay
 
 	; Schieben der LEDs
-	LSLS LEDS, LEDS, #1
+	LSL  LEDS, LEDS, #1
 	
 	CMP  LEDS, R9 ; R9 = 0x1FE
 	BNE  button1_pressed
