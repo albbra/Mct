@@ -57,8 +57,8 @@ main  PROC
     ; Aktivieren der I/O-Ports
     LDR R0, =RCC_AHB2ENR
     LDR R1, =5              ; enable Port A+C  (Bit 0 und 2)
-	;LDR R2, =0x00000000		; Maskierung der I/O-Ports
-	;AND R1, R1, R2
+	LDR R2, =0x00000005		; Maskierung der I/O-Ports 
+	AND R1, R1, R2
     STR R1, [R0]
 
 	; Konfiguration der Portpins PA[7:0] fuer LEDs
