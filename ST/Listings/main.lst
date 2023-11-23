@@ -1998,7 +1998,7 @@ ARM Macro Assembler    Page 31
   175 000000B0 F045 0580       ORR              LEDS2, LEDS2, #0x80
   176 000000B4 6005            STR              LEDS2, [R0]
   177 000000B6         
-  178 000000B6 F04F 0864       MOV              R8, #100    ; 100ms warten
+  178 000000B6 F04F 08C8       MOV              R8, #200    ; 100ms warten
   179 000000BA F7FF FFFE       BL               up_delay
   180 000000BE         
   181 000000BE F04F 0400       MOV              LEDS, #0x00
