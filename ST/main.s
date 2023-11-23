@@ -97,8 +97,6 @@ loop
 	LDR R0, =GPIOC_IDR ; Lesen des Ports C
 	LDR R1, [R0]	
 	
-	;MOV R1, #3
-	
 	CMP R1, #0           ; Sind beide Bits gesetzt?
 	BEQ both_buttons_pressed
 	
