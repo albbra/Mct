@@ -173,7 +173,7 @@ button2_pressed ; Taster 2 ist gedrueckt
 	ORR  LEDS2, LEDS2, #0x80
 	STR  LEDS2, [R0]
 	
-	MOV  R8, #200 ; 100ms warten
+	MOV  R8, #200 ; 200ms warten
 	BL   up_delay
 	
 	MOV  LEDS, #0x00
