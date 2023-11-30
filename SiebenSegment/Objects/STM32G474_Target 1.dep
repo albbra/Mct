@@ -1,0 +1,8 @@
+Dependencies for Project 'STM32G474', Target 'Target 1': (DO NOT MODIFY !)
+CompilerVersion: 6160000::V6.16::ARMCLANG
+F (.\main.s)(0x65686495)(--cpu Cortex-M4.fp.sp -g-IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536"--pd "STM32G474xx SETA 1"--list .\listings\main.lst--xref -o .\objects\main.o--depend .\objects\main.d)
+I (STM32G4xx_REG_ASM.inc)(0x65685381)
+F (.\STM32G4xx_REG_ASM.inc)(0x65685381)()
+F (.\stm32g474xx.h)(0x65685382)()
+F (.\startup_stm32g474xx.s)(0x65685382)(--cpu Cortex-M4.fp.sp -g-IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536"--pd "STM32G474xx SETA 1"--list .\listings\startup_stm32g474xx.lst--xref -o .\objects\startup_stm32g474xx.o--depend .\objects\startup_stm32g474xx.d)
+F (.\delay.s)(0x65685381)(--cpu Cortex-M4.fp.sp -g-IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-IC:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 536"--pd "STM32G474xx SETA 1"--list .\listings\delay.lst--xref -o .\objects\delay.o--depend .\objects\delay.d)
