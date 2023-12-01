@@ -39,7 +39,7 @@
     IMPORT  up_delay
 
 ; ------------------------------- symbolische Konstanten ------------------------------------
-ZAEHLERSTAND RN R1
+ZAEHLERSTAND RN R1 ; nicht nötig?
 ZEHNER 		 RN R2
 EINER 		 RN R3
 
@@ -79,13 +79,19 @@ main  PROC
     AND R1, R1, R2          ; Bits [0:3] = 00 => Input Mode
     STR R1, [R0]	
 	
-	MOV ZAEHLERSTAND, #0x3F
+;#################################
+; Startwerte
+default
+	MOV ZAEHLERSTAND, #0x3F ;nicht nötig ?
 	MOV EINER, #0x3F
 	MOV ZEHNER, #0x80
 	
+;#################################
+; Defaultzustand
 	LDR  R0, =GPIOA_ODR
 	STR  EINER, [R0]
-	
+	STR  ZEHNER, [R0]
+
 ;#################################
 ; Endlosschleife
 loop 
@@ -94,10 +100,11 @@ loop
 	LDR R0, =GPIOC_IDR ; Lesen des Ports C
 	LDR R1, [R0]	
 	
-	B	zaehler
-	;CMP R1, #0           ; Sind beide Bits gesetzt?
-	;BEQ both_buttons_pressed
+	CMP R1, #6           ; Ist Bit PC0 gesetzt? -> Start/Weiter
+	BEQ zaehler
 	
+	CMP R1, #3           ; Ist Bit PC2 gesetzt? -> Reset
+	BEQ default
 	
 	B	loop
 	
@@ -107,76 +114,134 @@ zaehler
 	
 	LDR  R0, =GPIOA_ODR
 	
+	CMP R1, #5           ; Ist Bit PC1 gesetzt? -> Stop
+	BEQ loop
 	
-	CMP EINER, #0x6F
+	CMP EINER, #0x6F     ; 9 ? wenn ja -> 0
 	BNE nicht_neun
 	MOV EINER, #0x3F	
 	B nicht_null
 nicht_neun
 
-	CMP EINER, #0x7F
+	CMP EINER, #0x7F     ; 8 ? wenn ja -> 9
 	BNE nicht_acht
 	MOV EINER, #0x6F
 nicht_acht
 
-	CMP EINER, #0x27
+	CMP EINER, #0x27     ; 7 ? wenn ja -> 8
 	BNE nicht_sieben
 	MOV EINER, #0x7F
 nicht_sieben
 
-	CMP EINER, #0x7D
+	CMP EINER, #0x7D     ; 6 ? wenn ja -> 7
 	BNE nicht_sechs
 	MOV EINER, #0x27
 nicht_sechs
 
-	CMP EINER, #0x6D
+	CMP EINER, #0x6D     ; 5 ? wenn ja -> 6
 	BNE nicht_fuenf
 	MOV EINER, #0x7D
 nicht_fuenf
 
-	CMP EINER, #0x66
+	CMP EINER, #0x66     ; 4 ? wenn ja -> 5
 	BNE nicht_vier
 	MOV EINER, #0x6D
 nicht_vier
 
-	CMP EINER, #0x4F
+	CMP EINER, #0x4F     ; 3 ? wenn ja -> 4
 	BNE nicht_drei
 	MOV EINER, #0x66
 nicht_drei
 
-	CMP EINER, #0x5B
+	CMP EINER, #0x5B     ; 2 ? wenn ja -> 3
 	BNE nicht_zwei
 	MOV EINER, #0x4F
 nicht_zwei
 
-	CMP EINER, #0x06
+	CMP EINER, #0x06     ; 1 ? wenn ja -> 2
 	BNE nicht_eins
 	MOV EINER, #0x5B
 nicht_eins
 
-	CMP EINER, #0x3F
+	CMP EINER, #0x3F     ; 0 ? wenn ja -> 9
 	BNE nicht_null
 	MOV EINER, #0x06
-	;Zehnerstelle
-	ADD Zehner
-	
+	STR  EINER, [R0]
+	;Zehnerstelle+1
 	B zeta 
 	
 nicht_null
 
-	; 100ms warten
-	MOV  R8, #1000
+	; 10ms warten -> 0.1s
+	MOV  R8, #100
 	BL   up_delay
 	
 	STR  EINER, [R0]
 	
-	b loop
+	b zaehler
 	
-zeta ;Zehner+1 
+;#################################
+zeta ;Zehnerstelle 
 
+	CMP ZEHNER, #0xEF     ; 9 ? wenn ja -> 0
+	BNE z_nicht_neun
+	MOV ZEHNER, #0xBF	
+	B z_nicht_null
+z_nicht_neun
 
+	CMP ZEHNER, #0xFF     ; 8 ? wenn ja -> 9
+	BNE z_nicht_acht
+	MOV ZEHNER, #0xEF
+z_nicht_acht
 
-b loop
+	CMP ZEHNER, #0xA7     ; 7 ? wenn ja -> 8
+	BNE z_nicht_sieben
+	MOV ZEHNER, #0xFF
+z_nicht_sieben
+
+	CMP ZEHNER, #0xFD     ; 6 ? wenn ja -> 7
+	BNE z_nicht_sechs
+	MOV ZEHNER, #0xA7
+z_nicht_sechs
+
+	CMP ZEHNER, #0xED     ; 5 ? wenn ja -> 6
+	BNE z_nicht_fuenf
+	MOV ZEHNER, #0xFD
+z_nicht_fuenf
+
+	CMP ZEHNER, #0xE6     ; 4 ? wenn ja -> 5
+	BNE z_nicht_vier
+	MOV ZEHNER, #0xED
+z_nicht_vier
+
+	CMP ZEHNER, #0xCF     ; 3 ? wenn ja -> 4
+	BNE z_nicht_drei
+	MOV ZEHNER, #0xE6
+z_nicht_drei
+
+	CMP ZEHNER, #0xDB     ; 2 ? wenn ja -> 3
+	BNE z_nicht_zwei
+	MOV ZEHNER, #0xCF
+z_nicht_zwei
+
+	CMP ZEHNER, #0x86     ; 1 ? wenn ja -> 2
+	BNE z_nicht_eins
+	MOV ZEHNER, #0xDB
+z_nicht_eins
+
+	CMP ZEHNER, #0xBF     ; 0 ? wenn ja -> 1
+	BNE z_nicht_null
+	MOV ZEHNER, #0x86
+	
+z_nicht_null
+
+	; 10ms warten -> 0.1s
+	MOV  R8, #100
+	BL   up_delay
+	
+	STR  ZEHNER, [R0]
+	
+	b zaehler
 
 
 
