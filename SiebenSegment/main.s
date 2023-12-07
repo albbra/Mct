@@ -2,14 +2,14 @@
 ; ========================================================================================
 ; | Modulname:   main.s                                   | Prozessor:  STM32G474        |
 ; |--------------------------------------------------------------------------------------|
-; | Ersteller:   P. Raab                                  | Datum: 17.09.2020            |
+; | Ersteller:   P. Raab                                  | Datum: 07.12.2023            |
 ; |--------------------------------------------------------------------------------------|
-; | Version:   2.0               | Projekt:  Lauflicht    | Assembler:  ARM-ASM          |
+; | Version:   2.2              | Projekt:  Stopuhr       | Assembler:  ARM-ASM          |
 ; |--------------------------------------------------------------------------------------|
 ; | Aufgabe:                                                                             |
-; |    Es soll ein einfaches Lauflicht (8x LEDs der MCT-Lehrplattform) mit einer         |
-; |    Umschaltfrequenz von 500 ms  realisiert werden.                                   |
-; |    Das Lauflicht soll nur laufen, solange der Taster an Pin PC0 gedrueckt ist.       |
+; |    Stopuhr                                                                           |
+; |                                                                                      |
+; |                                                                                      |
 ; |                                                                                      |
 ; |--------------------------------------------------------------------------------------|
 ; | Bemerkungen:                                                                         |
@@ -84,18 +84,34 @@ main  PROC
 default
 	MOV ZAEHLERSTAND, #0x3F ;nicht nötig ?
 	MOV EINER, #0x3F
-	MOV ZEHNER, #0x80
+	MOV ZEHNER, #0xBF
 	
 ;#################################
 ; Defaultzustand
+
 	LDR  R0, =GPIOA_ODR
 	STR  EINER, [R0]
+	
+	; 5ms warten -> 0.05s
+	MOV  R8, #5
+	BL   up_delay
+	
+	LDR  R0, =GPIOA_ODR
 	STR  ZEHNER, [R0]
-
+	
+	; 5ms warten -> 0.05s
+	MOV  R8, #5
+	BL   up_delay
+	
+	LDR R0, =GPIOC_IDR ; Lesen des Ports C
+	LDR R1, [R0]	
+	
+	CMP R1, #6           ; Ist Bit PC0 gesetzt? -> Start/Weiter
+	BNE default 
+	
 ;#################################
 ; Endlosschleife
 loop 
-	
 	
 	LDR R0, =GPIOC_IDR ; Lesen des Ports C
 	LDR R1, [R0]	
@@ -112,10 +128,33 @@ loop
 ; Zaehler
 zaehler
 	
+	MOV R6, #0
+schleife	
 	LDR  R0, =GPIOA_ODR
+	STR  EINER, [R0]
 	
+	; 5ms warten -> 0.05s
+	MOV  R8, #5
+	BL   up_delay
+	
+	LDR  R0, =GPIOA_ODR
+	STR  ZEHNER, [R0]
+	
+	; 0.5ms warten -> 0.05s
+	MOV  R8, #5
+	BL   up_delay
+	
+	ADD R6,R6,#1
+	CMP R6, #10
+	BNE schleife
+
+	LDR R0, =GPIOC_IDR ; Lesen des Ports C
+	LDR R1, [R0]
 	CMP R1, #5           ; Ist Bit PC1 gesetzt? -> Stop
 	BEQ loop
+	
+	LDR  R0, =GPIOA_ODR
+	LDR R1, [R0]
 	
 	CMP EINER, #0x6F     ; 9 ? wenn ja -> 0
 	BNE nicht_neun
@@ -172,13 +211,9 @@ nicht_eins
 	
 nicht_null
 
-	; 10ms warten -> 0.1s
-	MOV  R8, #100
-	BL   up_delay
-	
 	STR  EINER, [R0]
-	
-	b zaehler
+
+	b z_nicht_null
 	
 ;#################################
 zeta ;Zehnerstelle 
@@ -235,11 +270,9 @@ z_nicht_eins
 	
 z_nicht_null
 
-	; 10ms warten -> 0.1s
-	MOV  R8, #100
-	BL   up_delay
-	
 	STR  ZEHNER, [R0]
+	
+	
 	
 	b zaehler
 

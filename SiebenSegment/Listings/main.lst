@@ -1846,7 +1846,7 @@ ARM Macro Assembler    Page 29
    55 00000000         main    PROC
    56 00000000         ;#################################
    57 00000000         ; Aktivieren der I/O-Ports
-   58 00000000 4846            LDR              R0, =RCC_AHB2ENR
+   58 00000000 4853            LDR              R0, =RCC_AHB2ENR
    59 00000002 F04F 0105       LDR              R1, =5      ; enable Port A+C  
                                                             (Bit 0 und 2)
    60 00000006 F04F 0205       LDR              R2, =0x00000005 ; Maskierung de
@@ -1860,7 +1860,7 @@ ARM Macro Assembler    Page 29
                                                             ort A =0xABFFFFFF (
                                                             Alternate Functions
                                                              for JTAG /SWD)
-   67 00000016 4A42            LDR              R2, =0xFFFF0000 ; Maskierung de
+   67 00000016 4A4F            LDR              R2, =0xFFFF0000 ; Maskierung de
                                                             r Pins [7:0]
    68 00000018 EA01 0102       AND              R1, R1, R2
    69 0000001C F245 5255       LDR              R2, =0x00005555 ; 01: General O
@@ -1872,7 +1872,7 @@ ARM Macro Assembler    Page 29
    74 00000026         ;#################################
    75 00000026         ; Konfiguration des Portpins PC[0] and PC[1] fuer Button
                        
-   76 00000026 483F            LDR              R0, =GPIOC_MODER
+   76 00000026 484C            LDR              R0, =GPIOC_MODER
    77 00000028 6801            LDR              R1, [R0]
    78 0000002A F06F 023F       LDR              R2, =0xFFFFFFC0 ; Maskierung de
                                                             r Bits [1:0] fuer P
@@ -1895,222 +1895,278 @@ ARM Macro Assembler    Page 30
    85 00000034 F04F 013F       MOV              ZAEHLERSTAND, #0x3F 
                                                             ;nicht nötig ?
    86 00000038 F04F 033F       MOV              EINER, #0x3F
-   87 0000003C F04F 0280       MOV              ZEHNER, #0x80
+   87 0000003C F04F 02BF       MOV              ZEHNER, #0xBF
    88 00000040         
    89 00000040         ;#################################
    90 00000040         ; Defaultzustand
-   91 00000040 4839            LDR              R0, =GPIOA_ODR
-   92 00000042 6003            STR              EINER, [R0]
-   93 00000044 6002            STR              ZEHNER, [R0]
-   94 00000046         
-   95 00000046         ;#################################
-   96 00000046         ; Endlosschleife
-   97 00000046         loop
-   98 00000046         
-   99 00000046         
-  100 00000046 4839            LDR              R0, =GPIOC_IDR 
+   91 00000040         ; 10ms warten -> 0.1s
+   92 00000040         
+   93 00000040         
+   94 00000040 4846            LDR              R0, =GPIOA_ODR
+   95 00000042 6003            STR              EINER, [R0]
+   96 00000044         
+   97 00000044         ; 5ms warten -> 0.05s
+   98 00000044 F04F 0805       MOV              R8, #5
+   99 00000048 F7FF FFFE       BL               up_delay
+  100 0000004C         
+  101 0000004C 4843            LDR              R0, =GPIOA_ODR
+  102 0000004E 6002            STR              ZEHNER, [R0]
+  103 00000050         
+  104 00000050         ; 5ms warten -> 0.05s
+  105 00000050 F04F 0805       MOV              R8, #5
+  106 00000054 F7FF FFFE       BL               up_delay
+  107 00000058         
+  108 00000058 4841            LDR              R0, =GPIOC_IDR 
                                                             ; Lesen des Ports C
                                                             
-  101 00000048 6801            LDR              R1, [R0]
-  102 0000004A         
-  103 0000004A 2906            CMP              R1, #6      ; Ist Bit PC0 geset
+  109 0000005A 6801            LDR              R1, [R0]
+  110 0000005C         
+  111 0000005C 2906            CMP              R1, #6      ; Ist Bit PC0 geset
                                                             zt? -> Start/Weiter
                                                             
-  104 0000004C D002            BEQ              zaehler
-  105 0000004E         
-  106 0000004E 2903            CMP              R1, #3      ; Ist Bit PC2 geset
+  112 0000005E D1E9            BNE              default
+  113 00000060         
+  114 00000060         ;#################################
+  115 00000060         ; Endlosschleife
+  116 00000060         loop
+  117 00000060         
+  118 00000060 483F            LDR              R0, =GPIOC_IDR 
+                                                            ; Lesen des Ports C
+                                                            
+  119 00000062 6801            LDR              R1, [R0]
+  120 00000064         
+  121 00000064 2906            CMP              R1, #6      ; Ist Bit PC0 geset
+                                                            zt? -> Start/Weiter
+                                                            
+  122 00000066 D002            BEQ              zaehler
+  123 00000068         
+  124 00000068 2903            CMP              R1, #3      ; Ist Bit PC2 geset
                                                             zt? -> Reset
-  107 00000050 D0F0            BEQ              default
-  108 00000052         
-  109 00000052 E7F8            B                loop
-  110 00000054         
-  111 00000054         ;#################################
-  112 00000054         ; Zaehler
-  113 00000054         zaehler
-  114 00000054         
-  115 00000054 4834            LDR              R0, =GPIOA_ODR
-  116 00000056         
-  117 00000056 2905            CMP              R1, #5      ; Ist Bit PC1 geset
-                                                            zt? -> Stop
-  118 00000058 D0F5            BEQ              loop
-  119 0000005A         
-  120 0000005A 2B6F            CMP              EINER, #0x6F ; 9 ? wenn ja -> 0
-                                                            
-  121 0000005C D102            BNE              nicht_neun
-  122 0000005E F04F 033F       MOV              EINER, #0x3F
-  123 00000062 E025            B                nicht_null
-  124 00000064         nicht_neun
-  125 00000064         
-  126 00000064 2B7F            CMP              EINER, #0x7F ; 8 ? wenn ja -> 9
-                                                            
-  127 00000066 D101            BNE              nicht_acht
-  128 00000068 F04F 036F       MOV              EINER, #0x6F
-  129 0000006C         nicht_acht
-  130 0000006C         
-  131 0000006C 2B27            CMP              EINER, #0x27 ; 7 ? wenn ja -> 8
+  125 0000006A D0E3            BEQ              default
+  126 0000006C         
+  127 0000006C E7F8            B                loop
+  128 0000006E         
+  129 0000006E         ;#################################
+  130 0000006E         ; Zaehler
 
 
 
 ARM Macro Assembler    Page 31 
 
 
+  131 0000006E         zaehler
+  132 0000006E         
+  133 0000006E F04F 0600       MOV              R6, #0
+  134 00000072         schleife
+  135 00000072 483A            LDR              R0, =GPIOA_ODR
+  136 00000074 6003            STR              EINER, [R0]
+  137 00000076         
+  138 00000076         ; 5ms warten -> 0.05s
+  139 00000076 F04F 0805       MOV              R8, #5
+  140 0000007A F7FF FFFE       BL               up_delay
+  141 0000007E         
+  142 0000007E 4837            LDR              R0, =GPIOA_ODR
+  143 00000080 6002            STR              ZEHNER, [R0]
+  144 00000082         
+  145 00000082         ; 0.5ms warten -> 0.05s
+  146 00000082 F04F 0805       MOV              R8, #5
+  147 00000086 F7FF FFFE       BL               up_delay
+  148 0000008A         
+  149 0000008A F106 0601       ADD              R6,R6,#1
+  150 0000008E 2E0A            CMP              R6, #10
+  151 00000090 D1EF            BNE              schleife
+  152 00000092         
+  153 00000092 4833            LDR              R0, =GPIOC_IDR 
+                                                            ; Lesen des Ports C
                                                             
-  132 0000006E D101            BNE              nicht_sieben
-  133 00000070 F04F 037F       MOV              EINER, #0x7F
-  134 00000074         nicht_sieben
-  135 00000074         
-  136 00000074 2B7D            CMP              EINER, #0x7D ; 6 ? wenn ja -> 7
+  154 00000094 6801            LDR              R1, [R0]
+  155 00000096 2905            CMP              R1, #5      ; Ist Bit PC1 geset
+                                                            zt? -> Stop
+  156 00000098 D0E2            BEQ              loop
+  157 0000009A         
+  158 0000009A 4830            LDR              R0, =GPIOA_ODR
+  159 0000009C 6801            LDR              R1, [R0]
+  160 0000009E         
+  161 0000009E 2B6F            CMP              EINER, #0x6F ; 9 ? wenn ja -> 0
                                                             
-  137 00000076 D101            BNE              nicht_sechs
-  138 00000078 F04F 0327       MOV              EINER, #0x27
-  139 0000007C         nicht_sechs
-  140 0000007C         
-  141 0000007C 2B6D            CMP              EINER, #0x6D ; 5 ? wenn ja -> 6
+  162 000000A0 D102            BNE              nicht_neun
+  163 000000A2 F04F 033F       MOV              EINER, #0x3F
+  164 000000A6 E025            B                nicht_null
+  165 000000A8         nicht_neun
+  166 000000A8         
+  167 000000A8 2B7F            CMP              EINER, #0x7F ; 8 ? wenn ja -> 9
                                                             
-  142 0000007E D101            BNE              nicht_fuenf
-  143 00000080 F04F 037D       MOV              EINER, #0x7D
-  144 00000084         nicht_fuenf
-  145 00000084         
-  146 00000084 2B66            CMP              EINER, #0x66 ; 4 ? wenn ja -> 5
+  168 000000AA D101            BNE              nicht_acht
+  169 000000AC F04F 036F       MOV              EINER, #0x6F
+  170 000000B0         nicht_acht
+  171 000000B0         
+  172 000000B0 2B27            CMP              EINER, #0x27 ; 7 ? wenn ja -> 8
                                                             
-  147 00000086 D101            BNE              nicht_vier
-  148 00000088 F04F 036D       MOV              EINER, #0x6D
-  149 0000008C         nicht_vier
-  150 0000008C         
-  151 0000008C 2B4F            CMP              EINER, #0x4F ; 3 ? wenn ja -> 4
+  173 000000B2 D101            BNE              nicht_sieben
+  174 000000B4 F04F 037F       MOV              EINER, #0x7F
+  175 000000B8         nicht_sieben
+  176 000000B8         
+  177 000000B8 2B7D            CMP              EINER, #0x7D ; 6 ? wenn ja -> 7
                                                             
-  152 0000008E D101            BNE              nicht_drei
-  153 00000090 F04F 0366       MOV              EINER, #0x66
-  154 00000094         nicht_drei
-  155 00000094         
-  156 00000094 2B5B            CMP              EINER, #0x5B ; 2 ? wenn ja -> 3
-                                                            
-  157 00000096 D101            BNE              nicht_zwei
-  158 00000098 F04F 034F       MOV              EINER, #0x4F
-  159 0000009C         nicht_zwei
-  160 0000009C         
-  161 0000009C 2B06            CMP              EINER, #0x06 ; 1 ? wenn ja -> 2
-                                                            
-  162 0000009E D101            BNE              nicht_eins
-  163 000000A0 F04F 035B       MOV              EINER, #0x5B
-  164 000000A4         nicht_eins
-  165 000000A4         
-  166 000000A4 2B3F            CMP              EINER, #0x3F ; 0 ? wenn ja -> 9
-                                                            
-  167 000000A6 D103            BNE              nicht_null
-  168 000000A8 F04F 0306       MOV              EINER, #0x06
-  169 000000AC 6003            STR              EINER, [R0]
-  170 000000AE         ;Zehnerstelle+1
-  171 000000AE E005            B                zeta
-  172 000000B0         
-  173 000000B0         nicht_null
-  174 000000B0         
-  175 000000B0         ; 10ms warten -> 0.1s
-  176 000000B0 F04F 0864       MOV              R8, #100
-  177 000000B4 F7FF FFFE       BL               up_delay
-  178 000000B8         
-  179 000000B8 6003            STR              EINER, [R0]
-  180 000000BA         
-  181 000000BA E7CB            b                zaehler
-  182 000000BC         
+  178 000000BA D101            BNE              nicht_sechs
+  179 000000BC F04F 0327       MOV              EINER, #0x27
+  180 000000C0         nicht_sechs
+  181 000000C0         
+  182 000000C0 2B6D            CMP              EINER, #0x6D ; 5 ? wenn ja -> 6
 
 
 
 ARM Macro Assembler    Page 32 
 
 
-  183 000000BC         ;#################################
-  184 000000BC         zeta                                 ;Zehnerstelle 
-  185 000000BC         
-  186 000000BC 2AEF            CMP              ZEHNER, #0xEF 
+                                                            
+  183 000000C2 D101            BNE              nicht_fuenf
+  184 000000C4 F04F 037D       MOV              EINER, #0x7D
+  185 000000C8         nicht_fuenf
+  186 000000C8         
+  187 000000C8 2B66            CMP              EINER, #0x66 ; 4 ? wenn ja -> 5
+                                                            
+  188 000000CA D101            BNE              nicht_vier
+  189 000000CC F04F 036D       MOV              EINER, #0x6D
+  190 000000D0         nicht_vier
+  191 000000D0         
+  192 000000D0 2B4F            CMP              EINER, #0x4F ; 3 ? wenn ja -> 4
+                                                            
+  193 000000D2 D101            BNE              nicht_drei
+  194 000000D4 F04F 0366       MOV              EINER, #0x66
+  195 000000D8         nicht_drei
+  196 000000D8         
+  197 000000D8 2B5B            CMP              EINER, #0x5B ; 2 ? wenn ja -> 3
+                                                            
+  198 000000DA D101            BNE              nicht_zwei
+  199 000000DC F04F 034F       MOV              EINER, #0x4F
+  200 000000E0         nicht_zwei
+  201 000000E0         
+  202 000000E0 2B06            CMP              EINER, #0x06 ; 1 ? wenn ja -> 2
+                                                            
+  203 000000E2 D101            BNE              nicht_eins
+  204 000000E4 F04F 035B       MOV              EINER, #0x5B
+  205 000000E8         nicht_eins
+  206 000000E8         
+  207 000000E8 2B3F            CMP              EINER, #0x3F ; 0 ? wenn ja -> 9
+                                                            
+  208 000000EA D103            BNE              nicht_null
+  209 000000EC F04F 0306       MOV              EINER, #0x06
+  210 000000F0 6003            STR              EINER, [R0]
+  211 000000F2         ;Zehnerstelle+1
+  212 000000F2 E001            B                zeta
+  213 000000F4         
+  214 000000F4         nicht_null
+  215 000000F4         
+  216 000000F4         ; 5ms warten -> 0.05s
+  217 000000F4         ;MOV  R8, #50
+  218 000000F4         ;BL   up_delay
+  219 000000F4         
+  220 000000F4         
+  221 000000F4 6003            STR              EINER, [R0]
+  222 000000F6         
+  223 000000F6 E028            b                z_nicht_null
+  224 000000F8         
+  225 000000F8         ;#################################
+  226 000000F8         zeta                                 ;Zehnerstelle 
+  227 000000F8         
+  228 000000F8 2AEF            CMP              ZEHNER, #0xEF 
                                                             ; 9 ? wenn ja -> 0
-  187 000000BE D102            BNE              z_nicht_neun
-  188 000000C0 F04F 02BF       MOV              ZEHNER, #0xBF
-  189 000000C4 E023            B                z_nicht_null
-  190 000000C6         z_nicht_neun
-  191 000000C6         
-  192 000000C6 2AFF            CMP              ZEHNER, #0xFF 
-                                                            ; 8 ? wenn ja -> 9
-  193 000000C8 D101            BNE              z_nicht_acht
-  194 000000CA F04F 02EF       MOV              ZEHNER, #0xEF
-  195 000000CE         z_nicht_acht
-  196 000000CE         
-  197 000000CE 2AA7            CMP              ZEHNER, #0xA7 
-                                                            ; 7 ? wenn ja -> 8
-  198 000000D0 D101            BNE              z_nicht_sieben
-  199 000000D2 F04F 02FF       MOV              ZEHNER, #0xFF
-  200 000000D6         z_nicht_sieben
-  201 000000D6         
-  202 000000D6 2AFD            CMP              ZEHNER, #0xFD 
-                                                            ; 6 ? wenn ja -> 7
-  203 000000D8 D101            BNE              z_nicht_sechs
-  204 000000DA F04F 02A7       MOV              ZEHNER, #0xA7
-  205 000000DE         z_nicht_sechs
-  206 000000DE         
-  207 000000DE 2AED            CMP              ZEHNER, #0xED 
-                                                            ; 5 ? wenn ja -> 6
-  208 000000E0 D101            BNE              z_nicht_fuenf
-  209 000000E2 F04F 02FD       MOV              ZEHNER, #0xFD
-  210 000000E6         z_nicht_fuenf
-  211 000000E6         
-  212 000000E6 2AE6            CMP              ZEHNER, #0xE6 
-                                                            ; 4 ? wenn ja -> 5
-  213 000000E8 D101            BNE              z_nicht_vier
-  214 000000EA F04F 02ED       MOV              ZEHNER, #0xED
-  215 000000EE         z_nicht_vier
-  216 000000EE         
-  217 000000EE 2ACF            CMP              ZEHNER, #0xCF 
-                                                            ; 3 ? wenn ja -> 4
-  218 000000F0 D101            BNE              z_nicht_drei
-  219 000000F2 F04F 02E6       MOV              ZEHNER, #0xE6
-  220 000000F6         z_nicht_drei
-  221 000000F6         
-  222 000000F6 2ADB            CMP              ZEHNER, #0xDB 
-                                                            ; 2 ? wenn ja -> 3
-  223 000000F8 D101            BNE              z_nicht_zwei
-  224 000000FA F04F 02CF       MOV              ZEHNER, #0xCF
-  225 000000FE         z_nicht_zwei
-  226 000000FE         
-  227 000000FE 2A86            CMP              ZEHNER, #0x86 
-                                                            ; 1 ? wenn ja -> 2
-  228 00000100 D101            BNE              z_nicht_eins
-  229 00000102 F04F 02DB       MOV              ZEHNER, #0xDB
-  230 00000106         z_nicht_eins
-  231 00000106         
-  232 00000106 2ABF            CMP              ZEHNER, #0xBF 
+  229 000000FA D102            BNE              z_nicht_neun
+  230 000000FC F04F 02BF       MOV              ZEHNER, #0xBF
+  231 00000100 E023            B                z_nicht_null
+  232 00000102         z_nicht_neun
+  233 00000102         
+  234 00000102 2AFF            CMP              ZEHNER, #0xFF 
 
 
 
 ARM Macro Assembler    Page 33 
 
 
+                                                            ; 8 ? wenn ja -> 9
+  235 00000104 D101            BNE              z_nicht_acht
+  236 00000106 F04F 02EF       MOV              ZEHNER, #0xEF
+  237 0000010A         z_nicht_acht
+  238 0000010A         
+  239 0000010A 2AA7            CMP              ZEHNER, #0xA7 
+                                                            ; 7 ? wenn ja -> 8
+  240 0000010C D101            BNE              z_nicht_sieben
+  241 0000010E F04F 02FF       MOV              ZEHNER, #0xFF
+  242 00000112         z_nicht_sieben
+  243 00000112         
+  244 00000112 2AFD            CMP              ZEHNER, #0xFD 
+                                                            ; 6 ? wenn ja -> 7
+  245 00000114 D101            BNE              z_nicht_sechs
+  246 00000116 F04F 02A7       MOV              ZEHNER, #0xA7
+  247 0000011A         z_nicht_sechs
+  248 0000011A         
+  249 0000011A 2AED            CMP              ZEHNER, #0xED 
+                                                            ; 5 ? wenn ja -> 6
+  250 0000011C D101            BNE              z_nicht_fuenf
+  251 0000011E F04F 02FD       MOV              ZEHNER, #0xFD
+  252 00000122         z_nicht_fuenf
+  253 00000122         
+  254 00000122 2AE6            CMP              ZEHNER, #0xE6 
+                                                            ; 4 ? wenn ja -> 5
+  255 00000124 D101            BNE              z_nicht_vier
+  256 00000126 F04F 02ED       MOV              ZEHNER, #0xED
+  257 0000012A         z_nicht_vier
+  258 0000012A         
+  259 0000012A 2ACF            CMP              ZEHNER, #0xCF 
+                                                            ; 3 ? wenn ja -> 4
+  260 0000012C D101            BNE              z_nicht_drei
+  261 0000012E F04F 02E6       MOV              ZEHNER, #0xE6
+  262 00000132         z_nicht_drei
+  263 00000132         
+  264 00000132 2ADB            CMP              ZEHNER, #0xDB 
+                                                            ; 2 ? wenn ja -> 3
+  265 00000134 D101            BNE              z_nicht_zwei
+  266 00000136 F04F 02CF       MOV              ZEHNER, #0xCF
+  267 0000013A         z_nicht_zwei
+  268 0000013A         
+  269 0000013A 2A86            CMP              ZEHNER, #0x86 
+                                                            ; 1 ? wenn ja -> 2
+  270 0000013C D101            BNE              z_nicht_eins
+  271 0000013E F04F 02DB       MOV              ZEHNER, #0xDB
+  272 00000142         z_nicht_eins
+  273 00000142         
+  274 00000142 2ABF            CMP              ZEHNER, #0xBF 
                                                             ; 0 ? wenn ja -> 1
-  233 00000108 D101            BNE              z_nicht_null
-  234 0000010A F04F 0286       MOV              ZEHNER, #0x86
-  235 0000010E         
-  236 0000010E         z_nicht_null
-  237 0000010E         
-  238 0000010E         ; 10ms warten -> 0.1s
-  239 0000010E F04F 0864       MOV              R8, #100
-  240 00000112 F7FF FFFE       BL               up_delay
-  241 00000116         
-  242 00000116 6002            STR              ZEHNER, [R0]
-  243 00000118         
-  244 00000118 E79C            b                zaehler
-  245 0000011A         
-  246 0000011A         
-  247 0000011A         
-  248 0000011A                 ENDP
-  249 0000011A                 END
+  275 00000144 D101            BNE              z_nicht_null
+  276 00000146 F04F 0286       MOV              ZEHNER, #0x86
+  277 0000014A         
+  278 0000014A         z_nicht_null
+  279 0000014A         
+  280 0000014A         ; 5ms warten -> 0.05s
+  281 0000014A         ;MOV  R8, #10
+  282 0000014A         ;BL   up_delay
+  283 0000014A 6002            STR              ZEHNER, [R0]
+  284 0000014C         
+
+
+
+ARM Macro Assembler    Page 34 
+
+
+  285 0000014C         
+  286 0000014C         
+  287 0000014C E78F            b                zaehler
+  288 0000014E         
+  289 0000014E         
+  290 0000014E         
+  291 0000014E                 ENDP
+  292 0000014E                 END
               00 00 4002104C 
               FFFF0000 
               48000800 
               48000014 
               48000810 
-Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4.fp.sp 
---depend=.\objects\main.d -o.\objects\main.o -ID:\Keil\Pack\Keil\STM32G4xx_DFP\
-1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include --predefine="__UVISION_VERSION 
-SETA 538" --predefine="STM32G474xx SETA 1" --list=.\listings\main.lst main.s
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp.sp --depen
+d=.\objects\main.d -o.\objects\main.o -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\
+1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include -IC:\Keil_v5\ARM\CMSIS\Include 
+--predefine="__UVISION_VERSION SETA 536" --predefine="STM32G474xx SETA 1" --lis
+t=.\listings\main.lst main.s
 
 
 
@@ -2123,16 +2179,17 @@ Symbol: default
    Definitions
       At line 84 in file main.s
    Uses
-      At line 107 in file main.s
-Comment: default used once
-loop 00000046
+      At line 112 in file main.s
+      At line 125 in file main.s
+
+loop 00000060
 
 Symbol: loop
    Definitions
-      At line 97 in file main.s
+      At line 116 in file main.s
    Uses
-      At line 109 in file main.s
-      At line 118 in file main.s
+      At line 127 in file main.s
+      At line 156 in file main.s
 
 main 00000000
 
@@ -2150,205 +2207,213 @@ Symbol: main_s
    Uses
       None
 Comment: main_s unused
-nicht_acht 0000006C
+nicht_acht 000000B0
 
 Symbol: nicht_acht
    Definitions
-      At line 129 in file main.s
+      At line 170 in file main.s
    Uses
-      At line 127 in file main.s
+      At line 168 in file main.s
 Comment: nicht_acht used once
-nicht_drei 00000094
+nicht_drei 000000D8
 
 Symbol: nicht_drei
    Definitions
-      At line 154 in file main.s
+      At line 195 in file main.s
    Uses
-      At line 152 in file main.s
+      At line 193 in file main.s
 Comment: nicht_drei used once
-nicht_eins 000000A4
+nicht_eins 000000E8
 
 Symbol: nicht_eins
    Definitions
-      At line 164 in file main.s
+      At line 205 in file main.s
    Uses
-      At line 162 in file main.s
+      At line 203 in file main.s
 Comment: nicht_eins used once
-nicht_fuenf 00000084
-
+nicht_fuenf 000000C8
 
 
 
 ARM Macro Assembler    Page 2 Alphabetic symbol ordering
 Relocatable symbols
 
+
 Symbol: nicht_fuenf
    Definitions
-      At line 144 in file main.s
+      At line 185 in file main.s
    Uses
-      At line 142 in file main.s
+      At line 183 in file main.s
 Comment: nicht_fuenf used once
-nicht_neun 00000064
+nicht_neun 000000A8
 
 Symbol: nicht_neun
    Definitions
-      At line 124 in file main.s
+      At line 165 in file main.s
    Uses
-      At line 121 in file main.s
+      At line 162 in file main.s
 Comment: nicht_neun used once
-nicht_null 000000B0
+nicht_null 000000F4
 
 Symbol: nicht_null
    Definitions
-      At line 173 in file main.s
+      At line 214 in file main.s
    Uses
-      At line 123 in file main.s
-      At line 167 in file main.s
+      At line 164 in file main.s
+      At line 208 in file main.s
 
-nicht_sechs 0000007C
+nicht_sechs 000000C0
 
 Symbol: nicht_sechs
    Definitions
-      At line 139 in file main.s
+      At line 180 in file main.s
    Uses
-      At line 137 in file main.s
+      At line 178 in file main.s
 Comment: nicht_sechs used once
-nicht_sieben 00000074
+nicht_sieben 000000B8
 
 Symbol: nicht_sieben
    Definitions
-      At line 134 in file main.s
+      At line 175 in file main.s
    Uses
-      At line 132 in file main.s
+      At line 173 in file main.s
 Comment: nicht_sieben used once
-nicht_vier 0000008C
+nicht_vier 000000D0
 
 Symbol: nicht_vier
    Definitions
-      At line 149 in file main.s
+      At line 190 in file main.s
    Uses
-      At line 147 in file main.s
+      At line 188 in file main.s
 Comment: nicht_vier used once
-nicht_zwei 0000009C
+nicht_zwei 000000E0
 
 Symbol: nicht_zwei
    Definitions
-      At line 159 in file main.s
+      At line 200 in file main.s
    Uses
-      At line 157 in file main.s
+      At line 198 in file main.s
 Comment: nicht_zwei used once
-z_nicht_acht 000000CE
+schleife 00000072
 
-Symbol: z_nicht_acht
-   Definitions
+Symbol: schleife
 
 
 
 ARM Macro Assembler    Page 3 Alphabetic symbol ordering
 Relocatable symbols
 
-      At line 195 in file main.s
+   Definitions
+      At line 134 in file main.s
    Uses
-      At line 193 in file main.s
+      At line 151 in file main.s
+Comment: schleife used once
+z_nicht_acht 0000010A
+
+Symbol: z_nicht_acht
+   Definitions
+      At line 237 in file main.s
+   Uses
+      At line 235 in file main.s
 Comment: z_nicht_acht used once
-z_nicht_drei 000000F6
+z_nicht_drei 00000132
 
 Symbol: z_nicht_drei
    Definitions
-      At line 220 in file main.s
+      At line 262 in file main.s
    Uses
-      At line 218 in file main.s
+      At line 260 in file main.s
 Comment: z_nicht_drei used once
-z_nicht_eins 00000106
+z_nicht_eins 00000142
 
 Symbol: z_nicht_eins
    Definitions
-      At line 230 in file main.s
+      At line 272 in file main.s
    Uses
-      At line 228 in file main.s
+      At line 270 in file main.s
 Comment: z_nicht_eins used once
-z_nicht_fuenf 000000E6
+z_nicht_fuenf 00000122
 
 Symbol: z_nicht_fuenf
    Definitions
-      At line 210 in file main.s
+      At line 252 in file main.s
    Uses
-      At line 208 in file main.s
+      At line 250 in file main.s
 Comment: z_nicht_fuenf used once
-z_nicht_neun 000000C6
+z_nicht_neun 00000102
 
 Symbol: z_nicht_neun
    Definitions
-      At line 190 in file main.s
+      At line 232 in file main.s
    Uses
-      At line 187 in file main.s
+      At line 229 in file main.s
 Comment: z_nicht_neun used once
-z_nicht_null 0000010E
+z_nicht_null 0000014A
 
 Symbol: z_nicht_null
    Definitions
-      At line 236 in file main.s
+      At line 278 in file main.s
    Uses
-      At line 189 in file main.s
-      At line 233 in file main.s
+      At line 223 in file main.s
+      At line 231 in file main.s
+      At line 275 in file main.s
 
-z_nicht_sechs 000000DE
+z_nicht_sechs 0000011A
 
 Symbol: z_nicht_sechs
    Definitions
-      At line 205 in file main.s
-   Uses
-      At line 203 in file main.s
-Comment: z_nicht_sechs used once
-z_nicht_sieben 000000D6
-
-Symbol: z_nicht_sieben
-   Definitions
-      At line 200 in file main.s
-   Uses
 
 
 
 ARM Macro Assembler    Page 4 Alphabetic symbol ordering
 Relocatable symbols
 
-      At line 198 in file main.s
+      At line 247 in file main.s
+   Uses
+      At line 245 in file main.s
+Comment: z_nicht_sechs used once
+z_nicht_sieben 00000112
+
+Symbol: z_nicht_sieben
+   Definitions
+      At line 242 in file main.s
+   Uses
+      At line 240 in file main.s
 Comment: z_nicht_sieben used once
-z_nicht_vier 000000EE
+z_nicht_vier 0000012A
 
 Symbol: z_nicht_vier
    Definitions
-      At line 215 in file main.s
+      At line 257 in file main.s
    Uses
-      At line 213 in file main.s
+      At line 255 in file main.s
 Comment: z_nicht_vier used once
-z_nicht_zwei 000000FE
+z_nicht_zwei 0000013A
 
 Symbol: z_nicht_zwei
    Definitions
-      At line 225 in file main.s
+      At line 267 in file main.s
    Uses
-      At line 223 in file main.s
+      At line 265 in file main.s
 Comment: z_nicht_zwei used once
-zaehler 00000054
+zaehler 0000006E
 
 Symbol: zaehler
    Definitions
-      At line 113 in file main.s
+      At line 131 in file main.s
    Uses
-      At line 104 in file main.s
-      At line 181 in file main.s
-      At line 244 in file main.s
+      At line 122 in file main.s
+      At line 287 in file main.s
 
-zeta 000000BC
+zeta 000000F8
 
 Symbol: zeta
    Definitions
-      At line 184 in file main.s
+      At line 226 in file main.s
    Uses
-      At line 171 in file main.s
+      At line 212 in file main.s
 Comment: zeta used once
-26 symbols
+27 symbols
 
 
 
@@ -3378,23 +3443,26 @@ Symbol: GPIOA_ODR
    Definitions
       At line 329 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 91 in file main.s
-      At line 115 in file main.s
+      At line 94 in file main.s
+      At line 101 in file main.s
+      At line 135 in file main.s
+      At line 142 in file main.s
+      At line 158 in file main.s
 
 GPIOA_OSPEEDR 48000008
 
 Symbol: GPIOA_OSPEEDR
    Definitions
       At line 326 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: GPIOA_OSPEEDR unused
 
 
 
 ARM Macro Assembler    Page 17 Alphabetic symbol ordering
 Absolute symbols
 
+   Uses
+      None
+Comment: GPIOA_OSPEEDR unused
 GPIOA_OTYPER 48000004
 
 Symbol: GPIOA_OTYPER
@@ -3451,15 +3519,15 @@ Symbol: GPIOB_BRR
    Definitions
       At line 349 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: GPIOB_BRR unused
-GPIOB_BSRR 48000418
 
 
 
 ARM Macro Assembler    Page 18 Alphabetic symbol ordering
 Absolute symbols
 
+      None
+Comment: GPIOB_BRR unused
+GPIOB_BSRR 48000418
 
 Symbol: GPIOB_BSRR
    Definitions
@@ -3517,14 +3585,14 @@ Symbol: GPIOB_OTYPER
 Comment: GPIOB_OTYPER unused
 GPIOB_PUPDR 4800040C
 
-Symbol: GPIOB_PUPDR
-   Definitions
-
 
 
 ARM Macro Assembler    Page 19 Alphabetic symbol ordering
 Absolute symbols
 
+
+Symbol: GPIOB_PUPDR
+   Definitions
       At line 342 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -3581,18 +3649,20 @@ Symbol: GPIOC_BSRR
 Comment: GPIOC_BSRR unused
 GPIOC_IDR 48000810
 
-Symbol: GPIOC_IDR
-   Definitions
-      At line 359 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 20 Alphabetic symbol ordering
 Absolute symbols
 
+Symbol: GPIOC_IDR
+   Definitions
+      At line 359 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 100 in file main.s
-Comment: GPIOC_IDR used once
+      At line 108 in file main.s
+      At line 118 in file main.s
+      At line 153 in file main.s
+
 GPIOC_LCKR 4800081C
 
 Symbol: GPIOC_LCKR
@@ -3644,17 +3714,17 @@ Comment: GPIOC_PUPDR unused
 GPIOD_AFR0 48000C20
 
 Symbol: GPIOD_AFR0
-   Definitions
-      At line 378 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: GPIOD_AFR0 unused
 
 
 
 ARM Macro Assembler    Page 21 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 378 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: GPIOD_AFR0 unused
 GPIOD_AFR1 48000C24
 
 Symbol: GPIOD_AFR1
@@ -3709,17 +3779,17 @@ GPIOD_LCKR 48000C1C
 
 Symbol: GPIOD_LCKR
    Definitions
-      At line 377 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: GPIOD_LCKR unused
-GPIOD_MODER 48000C00
 
 
 
 ARM Macro Assembler    Page 22 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 377 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: GPIOD_LCKR unused
+GPIOD_MODER 48000C00
 
 Symbol: GPIOD_MODER
    Definitions
@@ -3774,17 +3844,17 @@ Symbol: GPIOE_AFR1
       At line 395 in file STM32G4xx_REG_ASM.inc
    Uses
       None
-Comment: GPIOE_AFR1 unused
-GPIOE_BASE 48001000
-
-Symbol: GPIOE_BASE
-   Definitions
 
 
 
 ARM Macro Assembler    Page 23 Alphabetic symbol ordering
 Absolute symbols
 
+Comment: GPIOE_AFR1 unused
+GPIOE_BASE 48001000
+
+Symbol: GPIOE_BASE
+   Definitions
       At line 170 in file STM32G4xx_REG_ASM.inc
    Uses
       At line 386 in file STM32G4xx_REG_ASM.inc
@@ -3839,17 +3909,17 @@ Symbol: GPIOE_MODER
    Uses
       None
 Comment: GPIOE_MODER unused
-GPIOE_ODR 48001014
-
-Symbol: GPIOE_ODR
-   Definitions
-      At line 391 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 24 Alphabetic symbol ordering
 Absolute symbols
 
+GPIOE_ODR 48001014
+
+Symbol: GPIOE_ODR
+   Definitions
+      At line 391 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: GPIOE_ODR unused
@@ -3904,17 +3974,17 @@ Symbol: GPIOF_BASE
       At line 404 in file STM32G4xx_REG_ASM.inc
       At line 405 in file STM32G4xx_REG_ASM.inc
       At line 406 in file STM32G4xx_REG_ASM.inc
-      At line 407 in file STM32G4xx_REG_ASM.inc
-      At line 408 in file STM32G4xx_REG_ASM.inc
-      At line 409 in file STM32G4xx_REG_ASM.inc
-      At line 410 in file STM32G4xx_REG_ASM.inc
-      At line 411 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 25 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 407 in file STM32G4xx_REG_ASM.inc
+      At line 408 in file STM32G4xx_REG_ASM.inc
+      At line 409 in file STM32G4xx_REG_ASM.inc
+      At line 410 in file STM32G4xx_REG_ASM.inc
+      At line 411 in file STM32G4xx_REG_ASM.inc
       At line 412 in file STM32G4xx_REG_ASM.inc
 
 GPIOF_BRR 48001428
@@ -3969,17 +4039,17 @@ GPIOF_OSPEEDR 48001408
 
 Symbol: GPIOF_OSPEEDR
    Definitions
-      At line 404 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: GPIOF_OSPEEDR unused
-GPIOF_OTYPER 48001404
 
 
 
 ARM Macro Assembler    Page 26 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 404 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: GPIOF_OSPEEDR unused
+GPIOF_OTYPER 48001404
 
 Symbol: GPIOF_OTYPER
    Definitions
@@ -4034,16 +4104,16 @@ GPIOG_BRR 48001828
 Symbol: GPIOG_BRR
    Definitions
       At line 427 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: GPIOG_BRR unused
-GPIOG_BSRR 48001818
-
 
 
 
 ARM Macro Assembler    Page 27 Alphabetic symbol ordering
 Absolute symbols
+
+   Uses
+      None
+Comment: GPIOG_BRR unused
+GPIOG_BSRR 48001818
 
 Symbol: GPIOG_BSRR
    Definitions
@@ -4099,17 +4169,17 @@ Symbol: GPIOG_OTYPER
    Uses
       None
 Comment: GPIOG_OTYPER unused
-GPIOG_PUPDR 4800180C
-
-Symbol: GPIOG_PUPDR
-   Definitions
-      At line 420 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 28 Alphabetic symbol ordering
 Absolute symbols
 
+GPIOG_PUPDR 4800180C
+
+Symbol: GPIOG_PUPDR
+   Definitions
+      At line 420 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: GPIOG_PUPDR unused
@@ -4164,16 +4234,16 @@ HRTIM1_TIMD_BASE 40016A00
 Symbol: HRTIM1_TIMD_BASE
    Definitions
       At line 108 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: HRTIM1_TIMD_BASE unused
-HRTIM1_TIME_BASE 40016A80
-
 
 
 
 ARM Macro Assembler    Page 29 Alphabetic symbol ordering
 Absolute symbols
+
+   Uses
+      None
+Comment: HRTIM1_TIMD_BASE unused
+HRTIM1_TIME_BASE 40016A80
 
 Symbol: HRTIM1_TIME_BASE
    Definitions
@@ -4229,17 +4299,17 @@ Symbol: IWDG_BASE
    Uses
       None
 Comment: IWDG_BASE unused
-LPTIM1_BASE 40007C00
-
-Symbol: LPTIM1_BASE
-   Definitions
-      At line 67 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 30 Alphabetic symbol ordering
 Absolute symbols
 
+LPTIM1_BASE 40007C00
+
+Symbol: LPTIM1_BASE
+   Definitions
+      At line 67 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: LPTIM1_BASE unused
@@ -4294,17 +4364,17 @@ Comment: OPAMP5_BASE unused
 OPAMP6_BASE 40010314
 
 Symbol: OPAMP6_BASE
-   Definitions
-      At line 89 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: OPAMP6_BASE unused
 
 
 
 ARM Macro Assembler    Page 31 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 89 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: OPAMP6_BASE unused
 OPAMP_BASE 40010300
 
 Symbol: OPAMP_BASE
@@ -4359,17 +4429,17 @@ Comment: QSPI_BASE unused
 QSPI_R_BASE A0001000
 
 Symbol: QSPI_R_BASE
-   Definitions
-      At line 13 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: QSPI_R_BASE unused
 
 
 
 ARM Macro Assembler    Page 32 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 13 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: QSPI_R_BASE unused
 RCC_AHB1ENR 40021048
 
 Symbol: RCC_AHB1ENR
@@ -4424,17 +4494,17 @@ Symbol: RCC_AHB3ENR
    Definitions
       At line 299 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: RCC_AHB3ENR unused
-RCC_AHB3RSTR 40021030
-
-Symbol: RCC_AHB3RSTR
 
 
 
 ARM Macro Assembler    Page 33 Alphabetic symbol ordering
 Absolute symbols
 
+      None
+Comment: RCC_AHB3ENR unused
+RCC_AHB3RSTR 40021030
+
+Symbol: RCC_AHB3RSTR
    Definitions
       At line 293 in file STM32G4xx_REG_ASM.inc
    Uses
@@ -4490,16 +4560,16 @@ Symbol: RCC_APB1SMENR1
 Comment: RCC_APB1SMENR1 unused
 RCC_APB1SMENR2 4002107C
 
-Symbol: RCC_APB1SMENR2
-   Definitions
-      At line 307 in file STM32G4xx_REG_ASM.inc
-   Uses
-
 
 
 ARM Macro Assembler    Page 34 Alphabetic symbol ordering
 Absolute symbols
 
+
+Symbol: RCC_APB1SMENR2
+   Definitions
+      At line 307 in file STM32G4xx_REG_ASM.inc
+   Uses
       None
 Comment: RCC_APB1SMENR2 unused
 RCC_APB2ENR 40021060
@@ -4554,17 +4624,17 @@ Symbol: RCC_BASE
       At line 303 in file STM32G4xx_REG_ASM.inc
       At line 304 in file STM32G4xx_REG_ASM.inc
       At line 305 in file STM32G4xx_REG_ASM.inc
-      At line 306 in file STM32G4xx_REG_ASM.inc
-      At line 307 in file STM32G4xx_REG_ASM.inc
-      At line 308 in file STM32G4xx_REG_ASM.inc
-      At line 309 in file STM32G4xx_REG_ASM.inc
-      At line 310 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 35 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 306 in file STM32G4xx_REG_ASM.inc
+      At line 307 in file STM32G4xx_REG_ASM.inc
+      At line 308 in file STM32G4xx_REG_ASM.inc
+      At line 309 in file STM32G4xx_REG_ASM.inc
+      At line 310 in file STM32G4xx_REG_ASM.inc
       At line 311 in file STM32G4xx_REG_ASM.inc
       At line 312 in file STM32G4xx_REG_ASM.inc
       At line 313 in file STM32G4xx_REG_ASM.inc
@@ -4619,17 +4689,17 @@ Symbol: RCC_CIER
 Comment: RCC_CIER unused
 RCC_CIFR 4002101C
 
-Symbol: RCC_CIFR
-   Definitions
-      At line 289 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
 
 
 
 ARM Macro Assembler    Page 36 Alphabetic symbol ordering
 Absolute symbols
 
+Symbol: RCC_CIFR
+   Definitions
+      At line 289 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
 Comment: RCC_CIFR unused
 RCC_CR 40021000
 
@@ -4684,16 +4754,16 @@ RTC_BASE 40002800
 Symbol: RTC_BASE
    Definitions
       At line 48 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: RTC_BASE unused
-SAI1_BASE 40015400
-
 
 
 
 ARM Macro Assembler    Page 37 Alphabetic symbol ordering
 Absolute symbols
+
+   Uses
+      None
+Comment: RTC_BASE unused
+SAI1_BASE 40015400
 
 Symbol: SAI1_BASE
    Definitions
@@ -4749,17 +4819,17 @@ Symbol: SPI4_BASE
       At line 96 in file STM32G4xx_REG_ASM.inc
    Uses
       None
-Comment: SPI4_BASE unused
-SRAM1_BASE 20000000
-
-Symbol: SRAM1_BASE
-   Definitions
 
 
 
 ARM Macro Assembler    Page 38 Alphabetic symbol ordering
 Absolute symbols
 
+Comment: SPI4_BASE unused
+SRAM1_BASE 20000000
+
+Symbol: SRAM1_BASE
+   Definitions
       At line 5 in file STM32G4xx_REG_ASM.inc
    Uses
       At line 19 in file STM32G4xx_REG_ASM.inc
@@ -4814,17 +4884,17 @@ Symbol: SRAMCAN_BASE
 Comment: SRAMCAN_BASE unused
 SRAM_BASE 20000000
 
-Symbol: SRAM_BASE
-   Definitions
-      At line 19 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
 
 
 
 ARM Macro Assembler    Page 39 Alphabetic symbol ordering
 Absolute symbols
 
+Symbol: SRAM_BASE
+   Definitions
+      At line 19 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
 Comment: SRAM_BASE unused
 SRAM_BB_BASE 22000000
 
@@ -4879,16 +4949,16 @@ TIM1_BASE 40012C00
 Symbol: TIM1_BASE
    Definitions
       At line 92 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: TIM1_BASE unused
-TIM20_BASE 40015000
-
 
 
 
 ARM Macro Assembler    Page 40 Alphabetic symbol ordering
 Absolute symbols
+
+   Uses
+      None
+Comment: TIM1_BASE unused
+TIM20_BASE 40015000
 
 Symbol: TIM20_BASE
    Definitions
@@ -4944,17 +5014,17 @@ Symbol: TIM7_BASE
    Uses
       None
 Comment: TIM7_BASE unused
-TIM8_BASE 40013400
-
-Symbol: TIM8_BASE
-   Definitions
-      At line 94 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 41 Alphabetic symbol ordering
 Absolute symbols
 
+TIM8_BASE 40013400
+
+Symbol: TIM8_BASE
+   Definitions
+      At line 94 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: TIM8_BASE unused
@@ -5009,17 +5079,17 @@ Comment: USART2_BASE unused
 USART3_BASE 40004800
 
 Symbol: USART3_BASE
-   Definitions
-      At line 54 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: USART3_BASE unused
 
 
 
 ARM Macro Assembler    Page 42 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 54 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: USART3_BASE unused
 USB_BASE 40005C00
 
 Symbol: USB_BASE
@@ -5065,8 +5135,10 @@ Symbol: up_delay
    Definitions
       At line 39 in file main.s
    Uses
-      At line 177 in file main.s
-      At line 240 in file main.s
+      At line 99 in file main.s
+      At line 106 in file main.s
+      At line 140 in file main.s
+      At line 147 in file main.s
 
 1 symbol
-642 symbols in table
+643 symbols in table
