@@ -81,14 +81,14 @@ main  PROC
 	
 ;#################################
 ; Startwerte
-default
+nullen
 	MOV ZAEHLERSTAND, #0x3F ;nicht nötig ?
 	MOV EINER, #0x3F
 	MOV ZEHNER, #0xBF
-	
+
 ;#################################
 ; Defaultzustand
-
+default
 	LDR  R0, =GPIOA_ODR
 	STR  EINER, [R0]
 	
@@ -112,6 +112,19 @@ default
 ;#################################
 ; Endlosschleife
 loop 
+	LDR  R0, =GPIOA_ODR
+	STR  EINER, [R0]
+	
+	; 5ms warten -> 0.05s
+	MOV  R8, #5
+	BL   up_delay
+	
+	LDR  R0, =GPIOA_ODR
+	STR  ZEHNER, [R0]
+	
+	; 0.5ms warten -> 0.05s
+	MOV  R8, #5
+	BL   up_delay
 	
 	LDR R0, =GPIOC_IDR ; Lesen des Ports C
 	LDR R1, [R0]	
@@ -120,7 +133,7 @@ loop
 	BEQ zaehler
 	
 	CMP R1, #3           ; Ist Bit PC2 gesetzt? -> Reset
-	BEQ default
+	BEQ nullen
 	
 	B	loop
 	
@@ -270,13 +283,9 @@ z_nicht_eins
 	
 z_nicht_null
 
-	STR  ZEHNER, [R0]
+	STR ZEHNER, [R0]
 	
-	
-	
-	b zaehler
-
-
+	B 	zaehler
 
 	ENDP				
     END
