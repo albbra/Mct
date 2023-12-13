@@ -1,0 +1,142 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         
+    2 00000000         
+    3 00000000         ; ======================================================
+                       ==================================
+    4 00000000         ; | Modulname:   delay.s                                
+                         | Prozessor:  STM32G474        |
+    5 00000000         ; |-----------------------------------------------------
+                       ---------------------------------|
+    6 00000000         ; | Ersteller:   P. Raab                                
+                         | Datum: 06.09.2021            |
+    7 00000000         ; |-----------------------------------------------------
+                       ---------------------------------|
+    8 00000000         ; | Version:   1.0               | Projekt:  Lauflicht  
+                         | Assembler:  ARM-ASM          |
+    9 00000000         ; |-----------------------------------------------------
+                       ---------------------------------|
+   10 00000000         ; | Aufgabe:                                            
+                                                        |
+   11 00000000         ; |    Mikrocontroller soll ein Vielfaches von 1 ms wart
+                       en. Die Wartezeit wird als       |
+   12 00000000         ; |    Parameter ueber Register R0 uebergeben.          
+                                                        |
+   13 00000000         ; |                                                     
+                                                        |
+   14 00000000         ; |-----------------------------------------------------
+                       ---------------------------------|
+   15 00000000         ; | Bemerkungen:                                        
+                                                        |
+   16 00000000         ; |                                                     
+                                                        |
+   17 00000000         ; |                                                     
+                                                        |
+   18 00000000         ; |-----------------------------------------------------
+                       ---------------------------------|
+   19 00000000         ; | Aenderungen:                                        
+                                                        |
+   20 00000000         ; |     06.09.2021        P. Raab              Initialve
+                       rsion                            |
+   21 00000000         ; |                                                     
+                                                        |
+   22 00000000         ; ======================================================
+                       ==================================
+   23 00000000         
+   24 00000000         ; ------------------------------- includierte Dateien --
+                       ----------------------------------
+   25 00000000         
+   26 00000000         
+   27 00000000         
+   28 00000000         ; ------------------------------- exportierte Variablen 
+                       ------------------------------------
+   29 00000000         
+   30 00000000         
+   31 00000000         ; ------------------------------- importierte Variablen 
+                       ------------------------------------  
+   32 00000000         
+   33 00000000         
+   34 00000000         ; ------------------------------- exportierte Funktionen
+                        -----------------------------------  
+   35 00000000                 EXPORT           up_delay
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   36 00000000         
+   37 00000000         ; ------------------------------- importierte Funktionen
+                        -----------------------------------
+   38 00000000         
+   39 00000000         
+   40 00000000         ; ------------------------------- symbolische Konstanten
+                        ------------------------------------
+   41 00000000         
+   42 00000000         
+   43 00000000         ; ------------------------------ Datensection / Variable
+                       n -----------------------------------  
+   44 00000000         
+   45 00000000         
+   46 00000000         ; ------------------------------- Codesection / Programm
+                        ------------------------------------
+   47 00000000                 AREA             DELAY, code
+   48 00000000         
+   49 00000000         
+   50 00000000         up_delay
+                               PROC
+   51 00000000 E92D 0102       PUSH             {R8, R1}
+   52 00000004 F44F 617A       MOV              R1, #4000
+   53 00000008 FB08 F801       MUL              R8, R8, R1
+   54 0000000C                 ALIGN            4
+   55 0000000C         loop_delay
+   56 0000000C F1A8 0801       SUB              R8, R8, #1
+   57 00000010 F1B8 0F00       CMP              R8, #0
+   58 00000014 D1FA            BNE              loop_delay
+   59 00000016 BF00            NOP
+   60 00000018 E8BD 0102       POP              {R8, R1}
+   61 0000001C 4770            BX               lr
+   62 0000001E                 ENDP
+   63 0000001E         
+   64 0000001E                 END
+Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4.fp.sp 
+--depend=.\objects\delay.d -o.\objects\delay.o -ID:\Keil\Pack\Keil\STM32G4xx_DF
+P\1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include --predefine="__UVISION_VERSIO
+N SETA 538" --predefine="STM32G474xx SETA 1" --list=.\listings\delay.lst delay.
+s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+DELAY 00000000
+
+Symbol: DELAY
+   Definitions
+      At line 47 in file delay.s
+   Uses
+      None
+Comment: DELAY unused
+loop_delay 0000000C
+
+Symbol: loop_delay
+   Definitions
+      At line 55 in file delay.s
+   Uses
+      At line 58 in file delay.s
+Comment: loop_delay used once
+up_delay 00000000
+
+Symbol: up_delay
+   Definitions
+      At line 50 in file delay.s
+   Uses
+      At line 35 in file delay.s
+Comment: up_delay used once
+3 symbols
+336 symbols in table
