@@ -2,23 +2,28 @@
 ; ========================================================================================
 ; | Modulname:   main.s                                   | Prozessor:  STM32G474        |
 ; |--------------------------------------------------------------------------------------|
-; | Ersteller:   P. Raab                                  | Datum: 07.12.2023            |
+; | Ersteller:   P. Raab                                  | Datum: 02.11.2021            |
 ; |--------------------------------------------------------------------------------------|
-; | Version:   2.2              | Projekt:  Stopuhr       | Assembler:  ARM-ASM          |
+; | Version:   4.0               | Projekt:  Lauflicht  V4| Assembler:  ARM-ASM          |
 ; |--------------------------------------------------------------------------------------|
 ; | Aufgabe:                                                                             |
-; |    Stopuhr                                                                           |
-; |                                                                                      |
-; |                                                                                      |
+; |    Es soll ein einfaches Lauflicht (8x LEDs der MCT-Lehrplattform) mit einer         |
+; |    Umschaltfrequenz von 500 ms  realisiert werden.                                   |
+; |    Die Wartezeit bzw. der Trigger zum Weiterschalten soll über einen Timer realisiert|
+; |    werden.                                                                           |
+; |    Das Lauflicht soll laufen, solange der Taster an Pin PC0 kurz gedrueckt wird.     |
+; |    Bei erneuten Drücken des Tasters soll das Lauflicht stoppen.                      |
 ; |                                                                                      |
 ; |--------------------------------------------------------------------------------------|
 ; | Bemerkungen:                                                                         |
-; |    Die Tastendruckerkennung soll mittels Polling erfolgen.                           |
+; |    Die Tastendruckerkennung soll mittels EXTI Interrupt erfolgen.                    |
 ; |                                                                                      |
 ; |--------------------------------------------------------------------------------------|
 ; | Aenderungen:                                                                         |
 ; |     17.09.2020        P. Raab              Initialversion                            |
 ; |     29.07.2021        P. Raab              Portierung auf STM32G474                  |
+; |     15.10.2021        P. Raab              Erweiterung auf Version V3 (Interrupts)   |
+; |     02.11.2021        P. Raab              Erweiterung auf Version V4 (Timer)        |
 ; |                                                                                      |
 ; ========================================================================================
 
@@ -34,7 +39,9 @@
 
 ; ------------------------------- exportierte Funktionen -----------------------------------		
 	EXPORT  main
-
+    EXPORT  EXTI0_IRQHandler
+    EXPORT  TIM6_IRQHandler
+		
 ; ------------------------------- importierte Funktionen -----------------------------------
     IMPORT  up_delay
 
@@ -54,255 +61,141 @@ EINER 		 RN R3
 ; Einsprungpunkt		
 main  PROC
 	;#################################
-    ; Aktivieren der I/O-Ports
-    LDR R0, =RCC_AHB2ENR
-    LDR R1, =5              ; enable Port A+C  (Bit 0 und 2)
-	LDR R2, =0x00000005		; Maskierung der I/O-Ports 
-	AND R1, R1, R2
-    STR R1, [R0]
+    ; Konfiguration der Portpins PA[7:0] fuer LEDs	
+    ldr R0, =RCC_AHB2ENR
+    ldr R1, =5              ; enable Port A+C  (Bit 0 und 2)
+    str R1, [R0]
 
-	; Konfiguration der Portpins PA[7:0] fuer LEDs
-    LDR R0, =GPIOA_MODER
-    LDR R1, [R0]            ; Reset Value for Port A =0xABFFFFFF (Alternate Functions for JTAG /SWD)
-    LDR R2, =0xFFFF0000     ; Maskierung der Pins [7:0]
-    AND R1, R1, R2
-    LDR R2, =0x00005555     ; 01: General Output Mode
-    ORR R1, R2
-    STR R1, [R0]
+    ldr R0, =GPIOA_MODER
+    ldr R1, [R0]            ; Reset Value for Port A =0xABFFFFFF (Alternate Functions for JTAG /SWD)
+    ldr R2, =0xFFFF0000     ; Maskierung der Pins [7:0]
+    and R1, R1, R2
+    ldr R2, =0x00005555     ; 01: General Output Mode
+    orr R1, R2
+    str R1, [R0]
 
 
 	;#################################
-    ; Konfiguration des Portpins PC[0] and PC[1] fuer Button
-    LDR R0, =GPIOC_MODER
-    LDR R1, [R0]            
-    LDR R2, =0xFFFFFFC0     ; Maskierung der Bits [1:0] fuer Pin 0 und Maskierung der Bits [3:2] fuer Pin 1
-    AND R1, R1, R2          ; Bits [0:3] = 00 => Input Mode
-    STR R1, [R0]	
+    ; Konfiguration des Portpins PC[0], PC[1] und PC[2] fuer Button
+    ldr R0, =GPIOC_MODER
+    ldr R1, [R0]            
+    ldr R2, =0xFFFFFFC0     ; Maskierung der Bits [5:0]
+    and R1, R1, R2          ; Bits [0:5] = 00 => Input Mode
+    str R1, [R0]	
 	
-;#################################
-; Startwerte
-nullen
+	
+	;###################################################
+	; Konfiguration des externen Interrupts
+    ; Clock enable
+    ldr  R0, =RCC_APB2ENR 
+    ldr  R1, [R0] 
+    orr  R1, #0x01      ; Bit 0 -> SysCfg
+    str  R1, [R0]
+	
+    ; Pin mapping
+    ldr   R0, =SYSCFG_EXTICR1
+    mov   R1, #2        ; PC[3] -> EXTI_LINE0
+    str   R1, [R0]       
+	
+    ; Triggerflanken
+    ldr   R0, =EXTI_FTSR1
+    mov   R1, #1        ; Bit 0 -> EXTI_LINE0
+    str   R1, [R0] 
+
+    ; NVIC: EXTI Line0 Interrupt = ID 6 => ICPR0/ISER0
+    ldr   R0, =NVIC_ICPR0 
+    mov   R1, #0x40      ; -> 0100:0000 -> 0x40
+    str   R1, [R0]       ; clear pending bit
+	
+    ldr   R0, =NVIC_ISER0 
+    mov   R1, #0x40      ; -> 0100:0000 -> 0x40
+    str   R1, [R0]       ; set enable bit
+
+    ; EXTI Line0 Interrupt freigeben
+    ldr   R0, =EXTI_IMR1 
+    mov   R1, #1         ; bit0 -> EXTI Line 0
+    str   R1, [R0]       
+	
+
+	;###################################################
+	; Konfiguration des Timers 6
+    ; Clock enable
+    ldr  R0, =RCC_APB1ENR1 
+    ldr  R1, [R0] 
+    orr  R1, #0x10      ; Bit 4 -> Timer 6
+    str  R1, [R0]
+	; Prescale Register
+    ldr  R0, =TIM6_PSC
+    mov  R1, #(16000-1)   ; -> TC_CLK = 1 ms
+    str  R1, [R0]	
+    ; Auto-Reload Register
+    ldr  R0, =TIM6_ARR
+    mov  R1, #499   ; -> T = 500 ms
+    str  R1, [R0] 
+	; Timer control register
+	ldr  R0, =TIM6_CR1
+    mov  R1, #1   ; -> counter enable 
+    str  R1, [R0] 	
+	
+	; Timer 6: NVIC
+    ldr   R0, =NVIC_ICPR1 ; clear pending bit 
+    mov   R1, #(1<<22)	
+    str   R1, [R0]   
+    ldr   R0, =NVIC_ISER1 ; set enable bit
+    mov   R1, #(1<<22)    
+    str   R1, [R0] 
+  
 	MOV ZAEHLERSTAND, #0x3F ;nicht nötig ?
 	MOV EINER, #0x3F
-	MOV ZEHNER, #0xBF
+	MOV ZEHNER, #0xBF  
+  
+  	; Timer 6 Interrupt
+	PUSH {R8,R0,R14}
+	ldr  R0, =TIM6_DIER
+    mov  R1, #1   ; -> update interrupt enable 
+	
+    str  R1, [R0]
+	POP  {R8,R0,R14}
+    mov  R11, #0x01   ; Initialwert der LEDs
 
-;#################################
-; Defaultzustand
-default
-	LDR  R0, =GPIOA_ODR
-	STR  EINER, [R0]
-	
-	; 5ms warten -> 0.05s
-	MOV  R8, #5
-	BL   up_delay
-	
-	LDR  R0, =GPIOA_ODR
-	STR  ZEHNER, [R0]
-	
-	; 5ms warten -> 0.05s
-	MOV  R8, #5
-	BL   up_delay
-	
-	LDR R0, =GPIOC_IDR ; Lesen des Ports C
-	LDR R1, [R0]	
-	
-	CMP R1, #6           ; Ist Bit PC0 gesetzt? -> Start/Weiter
-	BNE default 
-	
-;#################################
 ; Endlosschleife
 loop 
+
 	LDR  R0, =GPIOA_ODR
 	STR  EINER, [R0]
 	
 	; 5ms warten -> 0.05s
-	MOV  R8, #5
+	MOV  R8, #2
 	BL   up_delay
 	
 	LDR  R0, =GPIOA_ODR
 	STR  ZEHNER, [R0]
 	
-	; 0.5ms warten -> 0.05s
-	MOV  R8, #5
-	BL   up_delay
-	
-	LDR R0, =GPIOC_IDR ; Lesen des Ports C
-	LDR R1, [R0]	
-	
-	CMP R1, #6           ; Ist Bit PC0 gesetzt? -> Start/Weiter
-	BEQ zaehler
-	
-	CMP R1, #3           ; Ist Bit PC2 gesetzt? -> Reset
-	BEQ nullen
-	
-	B	loop
-	
-;#################################
-; Zaehler
-zaehler
-	
-	MOV R6, #0
-schleife	
-	LDR  R0, =GPIOA_ODR
-	STR  EINER, [R0]
-	
 	; 5ms warten -> 0.05s
-	MOV  R8, #5
+	MOV  R8, #2
 	BL   up_delay
 	
-	LDR  R0, =GPIOA_ODR
-	STR  ZEHNER, [R0]
+    B	loop	
+
 	
-	; 0.5ms warten -> 0.05s
-	MOV  R8, #5
-	BL   up_delay
-	
-	ADD R6,R6,#1
-	CMP R6, #10
-	BNE schleife
 
-	LDR R0, =GPIOC_IDR ; Lesen des Ports C
-	LDR R1, [R0]
-	CMP R1, #5           ; Ist Bit PC1 gesetzt? -> Stop
-	BEQ loop
-	
-	LDR  R0, =GPIOA_ODR
-	LDR R1, [R0]
-	
-	CMP EINER, #0x6F     ; 9 ? wenn ja -> 0
-	BNE nicht_neun
-	MOV EINER, #0x3F	
-	B nicht_null
-nicht_neun
-
-	CMP EINER, #0x7F     ; 8 ? wenn ja -> 9
-	BNE nicht_acht
-	MOV EINER, #0x6F
-nicht_acht
-
-	CMP EINER, #0x27     ; 7 ? wenn ja -> 8
-	BNE nicht_sieben
-	MOV EINER, #0x7F
-nicht_sieben
-
-	CMP EINER, #0x7D     ; 6 ? wenn ja -> 7
-	BNE nicht_sechs
-	MOV EINER, #0x27
-nicht_sechs
-
-	CMP EINER, #0x6D     ; 5 ? wenn ja -> 6
-	BNE nicht_fuenf
-	MOV EINER, #0x7D
-nicht_fuenf
-
-	CMP EINER, #0x66     ; 4 ? wenn ja -> 5
-	BNE nicht_vier
-	MOV EINER, #0x6D
-nicht_vier
-
-	CMP EINER, #0x4F     ; 3 ? wenn ja -> 4
-	BNE nicht_drei
-	MOV EINER, #0x66
-nicht_drei
-
-	CMP EINER, #0x5B     ; 2 ? wenn ja -> 3
-	BNE nicht_zwei
-	MOV EINER, #0x4F
-nicht_zwei
-
-	CMP EINER, #0x06     ; 1 ? wenn ja -> 2
-	BNE nicht_eins
-	MOV EINER, #0x5B
-nicht_eins
-
-	CMP EINER, #0x3F     ; 0 ? wenn ja -> 9
-	BNE nicht_null
-	MOV EINER, #0x06
-	STR  EINER, [R0]
-	;Zehnerstelle+1
-	B zeta 
-	
-nicht_null
-
-	STR  EINER, [R0]
-
-	b z_nicht_null
-	
-;#################################
-zeta ;Zehnerstelle 
-
-	CMP ZEHNER, #0xEF     ; 9 ? wenn ja -> 0
-	BNE z_nicht_neun
-	MOV ZEHNER, #0xBF	
-	B z_nicht_null
-z_nicht_neun
-
-	CMP ZEHNER, #0xFF     ; 8 ? wenn ja -> 9
-	BNE z_nicht_acht
-	MOV ZEHNER, #0xEF
-z_nicht_acht
-
-	CMP ZEHNER, #0xA7     ; 7 ? wenn ja -> 8
-	BNE z_nicht_sieben
-	MOV ZEHNER, #0xFF
-z_nicht_sieben
-
-	CMP ZEHNER, #0xFD     ; 6 ? wenn ja -> 7
-	BNE z_nicht_sechs
-	MOV ZEHNER, #0xA7
-z_nicht_sechs
-
-	CMP ZEHNER, #0xED     ; 5 ? wenn ja -> 6
-	BNE z_nicht_fuenf
-	MOV ZEHNER, #0xFD
-z_nicht_fuenf
-
-	CMP ZEHNER, #0xE6     ; 4 ? wenn ja -> 5
-	BNE z_nicht_vier
-	MOV ZEHNER, #0xED
-z_nicht_vier
-
-	CMP ZEHNER, #0xCF     ; 3 ? wenn ja -> 4
-	BNE z_nicht_drei
-	MOV ZEHNER, #0xE6
-z_nicht_drei
-
-	CMP ZEHNER, #0xDB     ; 2 ? wenn ja -> 3
-	BNE z_nicht_zwei
-	MOV ZEHNER, #0xCF
-z_nicht_zwei
-
-	CMP ZEHNER, #0x86     ; 1 ? wenn ja -> 2
-	BNE z_nicht_eins
-	MOV ZEHNER, #0xDB
-z_nicht_eins
-
-	CMP ZEHNER, #0xBF     ; 0 ? wenn ja -> 1
-	BNE z_nicht_null
-	MOV ZEHNER, #0x86
-	
-z_nicht_null
-
-	STR ZEHNER, [R0]
-	
-	B 	zaehler
 
 	ENDP				
-    END
+
 
 
 
 
 ; ========================================================================================
-; | UP-Name:                                              | Modul:                       |
+; | UP-Name:    EXTI0_IRQHandler                          | Modul:  main.s               |
 ; |--------------------------------------------------------------------------------------|
-; | Ersteller:                                            | Datum:                       |
+; | Ersteller:  Peter Raab                                | Datum:  15.10.2021           |
 ; |--------------------------------------------------------------------------------------|
-; |  Projekt:                                             | Prozessor:  LPC1778          |
+; | Projekt:    Lauflicht V3                             | Prozessor:  STM32G474         |
 ; |--------------------------------------------------------------------------------------|
-; | Funktion:                                                                            |
-; |                                                                                      |
-; |                                                                                      |
+; | Funktion:   Interrupt Handler der EXTI Line 0                                        |
+; |             Bei Betätigung des Tasters an PC[0] soll das Lauflicht aktiviert        |
+; |             bzw. deaktiviert werden.                                                 | 
 ; |--------------------------------------------------------------------------------------|
 ; | Eingangsgroessen:  (Parameter)                                                       |
 ; |                                                                                      |
@@ -312,7 +205,7 @@ z_nicht_null
 ; |                                                                                      |
 ; |                                                                                      |
 ; |--------------------------------------------------------------------------------------|
-; | Nebeneffekte:                                                                        |
+; | Nebeneffekte:    setzt Register R10 (= Zustand des Lauflichtes: 0: aus / 1: an)      |
 ; |                                                                                      |
 ; |                                                                                      |
 ; |--------------------------------------------------------------------------------------|
@@ -322,5 +215,91 @@ z_nicht_null
 ; |--------------------------------------------------------------------------------------|
 ; | Aenderungen:                                                                         |
 ; |     tt.mm.yyyy        Name              Beschreibung                                 |
+; |     15.10.2021        Peter Raab        initial version                              |
 ; |                                                                                      |
 ; ========================================================================================
+EXTI0_IRQHandler PROC
+	
+	push {R4, R5, LR}
+
+    ; 10 ms warten (Tasterprellen)
+    mov R0, #10   ; nested UP-Aufruf
+    bl  up_delay  ; -> LR sichern
+	
+    ; Zustand des Lauflichtes ändern
+    ; 0(default): aus / 1 an
+    eor  R10, #1 ; toggelt Bit 0
+
+    ; Interrupt Flag zurücksetzen
+    ldr  R4, =EXTI_PR1
+    mov  R5, #1    ; clear by writing 1
+    str  R5, [R4]
+
+    pop {R4, R5, LR}
+
+	bx lr
+
+	ENDP
+
+
+; ========================================================================================
+; | UP-Name:    EXTI0_IRQHandler                          | Modul:  main.s               |
+; |--------------------------------------------------------------------------------------|
+; | Ersteller:  Peter Raab                                | Datum:  02.11.2021           |
+; |--------------------------------------------------------------------------------------|
+; | Projekt:    Lauflicht V4                             | Prozessor:  STM32G474         |
+; |--------------------------------------------------------------------------------------|
+; | Funktion:   Interrupt Handler des Timers 6                                           |
+; |             Bei Überlauf des Timers soll alle 500 ms ein Interrupt erzeugt werden.   |
+; |                                                               | 
+; |--------------------------------------------------------------------------------------|
+; | Eingangsgroessen:  (Parameter)                                                       |
+; |                                                                                      |
+; |                                                                                      |
+; |--------------------------------------------------------------------------------------|
+; | Ausgangsgroessen:                                                                    |
+; |                                                                                      |
+; |                                                                                      |
+; |--------------------------------------------------------------------------------------|
+; | Nebeneffekte:    wertet Register R10 (= Zustand des Lauflichtes: 0: aus / 1: an) aus |
+; |                    -> wird in EXTI Interrupt gesetzt                                 |
+; |                  speichert aktuellen Zustand der LEDs in Register R11                |
+; |                                                                                      |
+; |--------------------------------------------------------------------------------------|
+; | Bemerkungen:                                                                         |
+; |                                                                                      |
+; |                                                                                      |
+; |--------------------------------------------------------------------------------------|
+; | Aenderungen:                                                                         |
+; |     tt.mm.yyyy        Name              Beschreibung                                 |
+; |     02.11.2021        Peter Raab        initial version                              |
+; |                                                                                      |
+; ========================================================================================
+TIM6_IRQHandler PROC
+	
+	; zuruecksetzen des Timers
+	ldr R0, =TIM6_SR
+    mov R1, #0
+    str R1, [R0]
+
+    ; wenn LED aktiv
+	cmp R10, #0     ; wenn =0
+    beq norun       ; dann kein Weiterschalten
+
+		; Schieben der LEDs
+		lsl  R11, R11, #1
+		cmp  R11, #0x100
+		bne  weiter
+		  mov  R11, #0x01  ; und wieder von vorne
+weiter	
+
+		; Schalten der LEDs
+		ldr  R0, =GPIOA_ODR
+		str  R11, [R0]
+	
+norun
+	bx lr
+	
+	ENDP
+		
+    END

@@ -48,16 +48,15 @@
 
 
 up_delay    PROC
-    PUSH   {R8, R1}
+    PUSH   {R8,R0, R1}
     MOV    R1, #4000
-    MUL    R8, R8, R1
-	ALIGN  4
-loop_delay 
-    SUB    R8, R8, #1
-    CMP    R8, #0
+    MUL    R0, R0, R1
+loop_delay    
+    SUB    R0, R0, #1
+    CMP    R0, #0
     BNE    loop_delay
 	NOP
-    POP    {R8, R1}
+    POP    {R8,R0, R1}
     BX     lr
     ENDP
 		

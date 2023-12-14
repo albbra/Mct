@@ -243,12 +243,10 @@ ARM Macro Assembler    Page 4
   133 0000010C 00000000        DCD              SPI3_IRQHandler ; SPI3
   134 00000110 00000000        DCD              UART4_IRQHandler ; UART4
   135 00000114 00000000        DCD              UART5_IRQHandler ; UART5
-  136 00000118 00000000        DCD              TIM6_DAC_IRQHandler ; TIM6 and 
-                                                            DAC1&3 underrun err
-                                                            ors
-  137 0000011C 00000000        DCD              TIM7_DAC_IRQHandler ; TIM7 and 
-                                                            DAC2&4 underrun err
-                                                            ors
+  136 00000118 00000000        DCD              TIM6_IRQHandler ; TIM6 and DAC1
+                                                            &3 underrun errors
+  137 0000011C 00000000        DCD              TIM7_IRQHandler ; TIM7 and DAC2
+                                                            &4 underrun errors
   138 00000120 00000000        DCD              DMA2_Channel1_IRQHandler 
                                                             ; DMA2 Channel 1
   139 00000124 00000000        DCD              DMA2_Channel2_IRQHandler 
@@ -258,14 +256,14 @@ ARM Macro Assembler    Page 4
   141 0000012C 00000000        DCD              DMA2_Channel4_IRQHandler 
                                                             ; DMA2 Channel 4
   142 00000130 00000000        DCD              DMA2_Channel5_IRQHandler 
+                                                            ; DMA2 Channel 5
+  143 00000134 00000000        DCD              ADC4_IRQHandler ; ADC4
 
 
 
 ARM Macro Assembler    Page 5 
 
 
-                                                            ; DMA2 Channel 5
-  143 00000134 00000000        DCD              ADC4_IRQHandler ; ADC4
   144 00000138 00000000        DCD              ADC5_IRQHandler ; ADC5
   145 0000013C 00000000        DCD              UCPD1_IRQHandler ; UCPD1
   146 00000140 00000000        DCD              COMP1_2_3_IRQHandler ; COMP1, C
@@ -323,14 +321,14 @@ ARM Macro Assembler    Page 5
                                                             interrupt line 0
   169 0000019C 00000000        DCD              FDCAN2_IT1_IRQHandler ; FDCAN2 
                                                             interrupt line 1
+  170 000001A0 00000000        DCD              FDCAN3_IT0_IRQHandler ; FDCAN3 
+                                                            interrupt line 0
 
 
 
 ARM Macro Assembler    Page 6 
 
 
-  170 000001A0 00000000        DCD              FDCAN3_IT0_IRQHandler ; FDCAN3 
-                                                            interrupt line 0
   171 000001A4 00000000        DCD              FDCAN3_IT1_IRQHandler ; FDCAN3 
                                                             interrupt line 1
   172 000001A8 00000000        DCD              RNG_IRQHandler ; RNG global int
@@ -388,14 +386,14 @@ ARM Macro Assembler    Page 6
 K]
   208 00000004 E7FE            B                .
   209 00000006                 ENDP
+  211 00000006         HardFault_Handler
+                               PROC
 
 
 
 ARM Macro Assembler    Page 7 
 
 
-  211 00000006         HardFault_Handler
-                               PROC
   212 00000006                 EXPORT           HardFault_Handler          [WEA
 K]
   213 00000006 E7FE            B                .
@@ -453,14 +451,14 @@ K]
   252 00000016                 EXPORT           RTC_TAMP_LSECSS_IRQHandler     
    [WEAK]
   253 00000016                 EXPORT           RTC_WKUP_IRQHandler            
+   [WEAK]
+  254 00000016                 EXPORT           FLASH_IRQHandler               
 
 
 
 ARM Macro Assembler    Page 8 
 
 
-   [WEAK]
-  254 00000016                 EXPORT           FLASH_IRQHandler               
    [WEAK]
   255 00000016                 EXPORT           RCC_IRQHandler                 
    [WEAK]
@@ -518,14 +516,14 @@ ARM Macro Assembler    Page 8
    [WEAK]
   282 00000016                 EXPORT           I2C1_ER_IRQHandler             
    [WEAK]
+  283 00000016                 EXPORT           I2C2_EV_IRQHandler             
+   [WEAK]
 
 
 
 ARM Macro Assembler    Page 9 
 
 
-  283 00000016                 EXPORT           I2C2_EV_IRQHandler             
-   [WEAK]
   284 00000016                 EXPORT           I2C2_ER_IRQHandler             
    [WEAK]
   285 00000016                 EXPORT           SPI1_IRQHandler                
@@ -566,9 +564,9 @@ ARM Macro Assembler    Page 9
    [WEAK]
   303 00000016                 EXPORT           UART5_IRQHandler               
    [WEAK]
-  304 00000016                 EXPORT           TIM6_DAC_IRQHandler            
+  304 00000016                 EXPORT           TIM6_IRQHandler                
    [WEAK]
-  305 00000016                 EXPORT           TIM7_DAC_IRQHandler            
+  305 00000016                 EXPORT           TIM7_IRQHandler                
    [WEAK]
   306 00000016                 EXPORT           DMA2_Channel1_IRQHandler       
    [WEAK]
@@ -583,14 +581,14 @@ ARM Macro Assembler    Page 9
   311 00000016                 EXPORT           ADC4_IRQHandler                
    [WEAK]
   312 00000016                 EXPORT           ADC5_IRQHandler                
+   [WEAK]
+  313 00000016                 EXPORT           UCPD1_IRQHandler               
 
 
 
 ARM Macro Assembler    Page 10 
 
 
-   [WEAK]
-  313 00000016                 EXPORT           UCPD1_IRQHandler               
    [WEAK]
   314 00000016                 EXPORT           COMP1_2_3_IRQHandler           
    [WEAK]
@@ -648,14 +646,14 @@ ARM Macro Assembler    Page 10
    [WEAK]
   341 00000016                 EXPORT           I2C3_EV_IRQHandler             
    [WEAK]
+  342 00000016                 EXPORT           I2C3_ER_IRQHandler             
+   [WEAK]
 
 
 
 ARM Macro Assembler    Page 11 
 
 
-  342 00000016                 EXPORT           I2C3_ER_IRQHandler             
-   [WEAK]
   343 00000016                 EXPORT           DMAMUX_OVR_IRQHandler          
    [WEAK]
   344 00000016                 EXPORT           QUADSPI_IRQHandler             
@@ -713,14 +711,14 @@ ARM Macro Assembler    Page 11
   389 00000016         USART1_IRQHandler
   390 00000016         USART2_IRQHandler
   391 00000016         USART3_IRQHandler
+  392 00000016         EXTI15_10_IRQHandler
+  393 00000016         RTC_Alarm_IRQHandler
 
 
 
 ARM Macro Assembler    Page 12 
 
 
-  392 00000016         EXTI15_10_IRQHandler
-  393 00000016         RTC_Alarm_IRQHandler
   394 00000016         USBWakeUp_IRQHandler
   395 00000016         TIM8_BRK_IRQHandler
   396 00000016         TIM8_UP_IRQHandler
@@ -733,8 +731,8 @@ ARM Macro Assembler    Page 12
   403 00000016         SPI3_IRQHandler
   404 00000016         UART4_IRQHandler
   405 00000016         UART5_IRQHandler
-  406 00000016         TIM6_DAC_IRQHandler
-  407 00000016         TIM7_DAC_IRQHandler
+  406 00000016         TIM6_IRQHandler
+  407 00000016         TIM7_IRQHandler
   408 00000016         DMA2_Channel1_IRQHandler
   409 00000016         DMA2_Channel2_IRQHandler
   410 00000016         DMA2_Channel3_IRQHandler
@@ -778,14 +776,14 @@ ARM Macro Assembler    Page 12
   448 00000016         DMA2_Channel6_IRQHandler
   449 00000016         DMA2_Channel7_IRQHandler
   450 00000016         DMA2_Channel8_IRQHandler
+  451 00000016         CORDIC_IRQHandler
+  452 00000016         FMAC_IRQHandler
 
 
 
 ARM Macro Assembler    Page 13 
 
 
-  451 00000016         CORDIC_IRQHandler
-  452 00000016         FMAC_IRQHandler
   453 00000016         
   454 00000016 E7FE            B                .
   455 00000018         
@@ -821,11 +819,12 @@ ARM Macro Assembler    Page 13
               00000400 
               00000200 
               00000000 
-Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4.fp.sp 
---depend=.\objects\startup_stm32g474xx.d -o.\objects\startup_stm32g474xx.o -ID:
-\Keil\Pack\Keil\STM32G4xx_DFP\1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include -
--predefine="__UVISION_VERSION SETA 538" --predefine="STM32G474xx SETA 1" --list
-=.\listings\startup_stm32g474xx.lst startup_stm32g474xx.s
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp.sp --apcs=
+interwork --depend=.\objects\startup_stm32g474xx.d -o.\objects\startup_stm32g47
+4xx.o -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\1.4.0\Drivers\CMSIS\Device\ST\ST
+M32G4xx\Include -IC:\Keil_v5\ARM\CMSIS\Include --predefine="__UVISION_VERSION S
+ETA 536" --predefine="STM32G474xx SETA 1" --list=.\listings\startup_stm32g474xx
+.lst startup_stm32g474xx.s
 
 
 
@@ -1883,18 +1882,18 @@ Symbol: TIM5_IRQHandler
       At line 132 in file startup_stm32g474xx.s
       At line 300 in file startup_stm32g474xx.s
 
-TIM6_DAC_IRQHandler 00000016
+TIM6_IRQHandler 00000016
 
-Symbol: TIM6_DAC_IRQHandler
+Symbol: TIM6_IRQHandler
    Definitions
       At line 406 in file startup_stm32g474xx.s
    Uses
       At line 136 in file startup_stm32g474xx.s
       At line 304 in file startup_stm32g474xx.s
 
-TIM7_DAC_IRQHandler 00000016
+TIM7_IRQHandler 00000016
 
-Symbol: TIM7_DAC_IRQHandler
+Symbol: TIM7_IRQHandler
    Definitions
       At line 407 in file startup_stm32g474xx.s
    Uses

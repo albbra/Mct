@@ -15,6 +15,8 @@ SRAM1_BB_BASE            equ  (0x22000000) ;  SRAM1(80 KB) base address in the b
 SRAM2_BB_BASE            equ  (0x22280000) ;  SRAM2(16 KB) base address in the bit-band region */
 CCMSRAM_BB_BASE          equ  (0x22300000) ;  CCMSRAM(32 KB) base address in the bit-band region */
 PERIPH_BB_BASE           equ  (0x42000000) ;  Peripheral base address in the bit-band region */
+SCS_BASE                 equ  (0xE000E000) ; System Control Space Base Address  
+
 ; Legacy defines 
 SRAM_BASE                equ  SRAM1_BASE
 SRAM_BB_BASE             equ  SRAM1_BB_BASE
@@ -35,6 +37,8 @@ FMC_BANK1_2           equ  (FMC_BANK1 + 0x04000000)
 FMC_BANK1_3           equ  (FMC_BANK1 + 0x08000000)
 FMC_BANK1_4           equ  (FMC_BANK1 + 0x0C000000)
 FMC_BANK3             equ  (FMC_BASE  + 0x20000000)
+
+NVIC_BASE             equ  (SCS_BASE +  0x0100)      ;  NVIC Base Address 
 
 ;  APB1 peripherals 
 TIM2_BASE             equ  (APB1PERIPH_BASE + 0x0000)
@@ -428,6 +432,37 @@ GPIOG_BRR         equ     (GPIOG_BASE + 0x28)   ;  GPIO Bit Reset register,     
 
 
 
+;##############################
+; System configuration controller
+SYSCFG_MEMRMP     equ     (SYSCFG_BASE + 0x00)  ; SYSCFG memory remap register,                        Address offset: 0x00      */
+SYSCFG_CFGR1      equ     (SYSCFG_BASE + 0x04)  ; SYSCFG configuration register 1,                     Address offset: 0x04      */
+SYSCFG_EXTICR1    equ     (SYSCFG_BASE + 0x08)  
+SYSCFG_EXTICR2    equ     (SYSCFG_BASE + 0x0C)
+SYSCFG_EXTICR3    equ     (SYSCFG_BASE + 0x10)
+SYSCFG_EXTICR4    equ     (SYSCFG_BASE + 0x14)
+SYSCFG_SCSR       equ     (SYSCFG_BASE + 0x18)  ; SYSCFG CCMSRAM control and status register,          Address offset: 0x18      */
+SYSCFG_CFGR2      equ     (SYSCFG_BASE + 0x1C)  ; SYSCFG configuration register 2,                     Address offset: 0x1C      */
+SYSCFG_SWPR       equ     (SYSCFG_BASE + 0x20)  ; SYSCFG CCMSRAM write protection register,            Address offset: 0x20      */
+SYSCFG_SKR        equ     (SYSCFG_BASE + 0x24)  ; SYSCFG CCMSRAM Key Register,                         Address offset: 0x24      */
+
+
+;##############################
+; External Interrupt/Event Controller
+EXTI_IMR1         equ     (EXTI_BASE + 0x00)  ;  EXTI Interrupt mask register 1,             Address offset: 0x00 */
+EXTI_EMR1         equ     (EXTI_BASE + 0x04)  ;  EXTI Event mask register 1,                 Address offset: 0x04 */
+EXTI_RTSR1        equ     (EXTI_BASE + 0x08)  ;  EXTI Rising trigger selection register 1,   Address offset: 0x08 */
+EXTI_FTSR1        equ     (EXTI_BASE + 0x0C)  ;  EXTI Falling trigger selection register 1,  Address offset: 0x0C */
+EXTI_SWIER1       equ     (EXTI_BASE + 0x10)  ;  EXTI Software interrupt event register 1,   Address offset: 0x10 */
+EXTI_PR1          equ     (EXTI_BASE + 0x14)  ;  EXTI Pending register 1,                    Address offset: 0x14 */
+EXTI_IMR2         equ     (EXTI_BASE + 0x20)  ;  EXTI Interrupt mask register 2,             Address offset: 0x20 */
+EXTI_EMR2         equ     (EXTI_BASE + 0x24)  ;  EXTI Event mask register 2,                 Address offset: 0x24 */
+EXTI_RTSR2        equ     (EXTI_BASE + 0x28)  ;  EXTI Rising trigger selection register 2,   Address offset: 0x28 */
+EXTI_FTSR2        equ     (EXTI_BASE + 0x2C)  ;  EXTI Falling trigger selection register 2,  Address offset: 0x2C */
+EXTI_SWIER2       equ     (EXTI_BASE + 0x30)  ;  EXTI Software interrupt event register 2,   Address offset: 0x30 */
+EXTI_PR2          equ     (EXTI_BASE + 0x34)  ;  EXTI Pending register 2,                    Address offset: 0x34 */
+
+
+
 ;ADC1                ((ADC_TypeDef *) ADC1_BASE)
 ;ADC2                ((ADC_TypeDef *) ADC2_BASE)
 ;ADC12_COMMON        ((ADC_Common_TypeDef *) ADC12_COMMON_BASE)
@@ -494,6 +529,129 @@ GPIOG_BRR         equ     (GPIOG_BASE + 0x28)   ;  GPIO Bit Reset register,     
 ;DBGMCU              ((DBGMCU_TypeDef *) DBGMCU_BASE)
 
 
+	
+;##############################
+; TIMER6
+TIM6_CR1		equ		(TIM6_BASE + 0x00)		;	TIM control register 1,                   Address offset: 0x00 */
+TIM6_CR2		equ		(TIM6_BASE + 0x04)		;	TIM control register 2,                   Address offset: 0x04 */
+TIM6_DIER		equ		(TIM6_BASE + 0x0C)		;	TIM DMA/interrupt enable register,        Address offset: 0x0C */
+TIM6_SR		    equ		(TIM6_BASE + 0x10)		;	TIM status register,                      Address offset: 0x10 */
+TIM6_EGR		equ		(TIM6_BASE + 0x14)		;	TIM event generation register,            Address offset: 0x14 */
+TIM6_CNT		equ		(TIM6_BASE + 0x24)		;	TIM counter register,                     Address offset: 0x24 */
+TIM6_PSC		equ		(TIM6_BASE + 0x28)		;	TIM prescaler,                            Address offset: 0x28 */
+TIM6_ARR		equ		(TIM6_BASE + 0x2C)		;	TIM auto-reload register,                 Address offset: 0x2C */
+	
+;##############################
+; TIMER7
+TIM7_CR1		equ		(TIM7_BASE + 0x00)		;	TIM control register 1,                   Address offset: 0x00 */
+TIM7_CR2		equ		(TIM7_BASE + 0x04)		;	TIM control register 2,                   Address offset: 0x04 */
+TIM7_DIER		equ		(TIM7_BASE + 0x0C)		;	TIM DMA/interrupt enable register,        Address offset: 0x0C */
+TIM7_SR		    equ		(TIM7_BASE + 0x10)		;	TIM status register,                      Address offset: 0x10 */
+TIM7_EGR		equ		(TIM7_BASE + 0x14)		;	TIM event generation register,            Address offset: 0x14 */
+TIM7_CNT		equ		(TIM7_BASE + 0x24)		;	TIM counter register,                     Address offset: 0x24 */
+TIM7_PSC		equ		(TIM7_BASE + 0x28)		;	TIM prescaler,                            Address offset: 0x28 */
+TIM7_ARR		equ		(TIM7_BASE + 0x2C)		;	TIM auto-reload register,                 Address offset: 0x2C */
+
+
+;##############################
+; UART1
+USART1_CR1		equ (USART1_BASE + 0x00 )
+USART1_CR2  	equ (USART1_BASE + 0x04 )
+USART1_CR3  	equ (USART1_BASE + 0x08 )
+USART1_BRR  	equ (USART1_BASE + 0x0C )
+USART1_GTPR 	equ (USART1_BASE + 0x10 )
+USART1_RTOR 	equ (USART1_BASE + 0x14 )
+USART1_RQR  	equ (USART1_BASE + 0x18 )
+USART1_ISR  	equ (USART1_BASE + 0x1C )
+USART1_ICR  	equ (USART1_BASE + 0x20 )
+USART1_RDR  	equ (USART1_BASE + 0x24 )
+USART1_TDR 		equ (USART1_BASE + 0x28 )
+USART1_PRESC	equ (USART1_BASE + 0x2C )
+
+;##############################
+; UART3
+USART3_CR1		equ (USART3_BASE + 0x00 )
+USART3_CR2  	equ (USART3_BASE + 0x04 )
+USART3_CR3  	equ (USART3_BASE + 0x08 )
+USART3_BRR  	equ (USART3_BASE + 0x0C )
+USART3_GTPR 	equ (USART3_BASE + 0x10 )
+USART3_RTOR 	equ (USART3_BASE + 0x14 )
+USART3_RQR  	equ (USART3_BASE + 0x18 )
+USART3_ISR  	equ (USART3_BASE + 0x1C )
+USART3_ICR  	equ (USART3_BASE + 0x20 )
+USART3_RDR  	equ (USART3_BASE + 0x24 )
+USART3_TDR 		equ (USART3_BASE + 0x28 )
+USART3_PRESC	equ (USART3_BASE + 0x2C )
+
+	
+;##############################
+; FMC_Bank1_R          ((FMC_Bank1_TypeDef *) FMC_Bank1_R_BASE)
+FMC_BCR1       equ     (FMC_Bank1_R_BASE + 0x00)   ;   NOR/PSRAM chip-select control register(BCR) and chip-select timing register(BTR), Address offset: 0x00-1C */
+FMC_BCR2       equ     (FMC_Bank1_R_BASE + 0x08)
+FMC_BCR3       equ     (FMC_Bank1_R_BASE + 0x10)
+FMC_BCR4       equ     (FMC_Bank1_R_BASE + 0x18)	
+FMC_BTR1       equ     (FMC_Bank1_R_BASE + 0x04)
+FMC_BTR2       equ     (FMC_Bank1_R_BASE + 0x0C)
+FMC_BTR3       equ     (FMC_Bank1_R_BASE + 0x14)
+FMC_BTR4       equ     (FMC_Bank1_R_BASE + 0x1C)	
+FMC_PCSCNTR    equ     (FMC_Bank1_R_BASE + 0x20)   ; PSRAM chip-select counter register, Address offset:    0x20 */
+;FMC_Bank1E_R        ((FMC_Bank1E_TypeDef *) FMC_Bank1E_R_BASE)
+FMC_BWTR1      equ     (FMC_Bank1E_R_BASE + 0x104)  ; NOR/PSRAM write timing registers, Address offset: 0x104-0x11C */
+FMC_BWTR2      equ     (FMC_Bank1E_R_BASE + 0x10C)
+FMC_BWTR3      equ     (FMC_Bank1E_R_BASE + 0x114)
+FMC_BWTR4      equ     (FMC_Bank1E_R_BASE + 0x11C)	
+
+	
+;##############################
+; NVIC
+NVIC_ISER0      equ      (NVIC_BASE + 0x00)   ;Offset: 0x000 (R/W)  Interrupt Set Enable Register           */
+NVIC_ISER1      equ      (NVIC_BASE + 0x04)
+NVIC_ISER2      equ      (NVIC_BASE + 0x08)
+NVIC_ISER3      equ      (NVIC_BASE + 0x0C)
+NVIC_ISER4      equ      (NVIC_BASE + 0x10)
+NVIC_ISER5      equ      (NVIC_BASE + 0x14)
+NVIC_ISER6      equ      (NVIC_BASE + 0x18)
+NVIC_ISER7      equ      (NVIC_BASE + 0x1C)
+
+	
+NVIC_ICER0      equ      (NVIC_BASE + 0x80) ; Offset: 0x080 (R/W)  Interrupt Clear Enable Register         */
+NVIC_ICER1      equ      (NVIC_BASE + 0x84)
+NVIC_ICER2      equ      (NVIC_BASE + 0x88)
+NVIC_ICER3      equ      (NVIC_BASE + 0x8C)
+NVIC_ICER4      equ      (NVIC_BASE + 0x90)
+NVIC_ICER5      equ      (NVIC_BASE + 0x94)
+NVIC_ICER6      equ      (NVIC_BASE + 0x98)
+NVIC_ICER7      equ      (NVIC_BASE + 0x9C)
+	
+NVIC_ISPR0      equ      (NVIC_BASE + 0x100)  ; Offset: 0x100 (R/W)  Interrupt Set Pending Register          */
+NVIC_ISPR1      equ      (NVIC_BASE + 0x104)
+NVIC_ISPR2      equ      (NVIC_BASE + 0x108)
+NVIC_ISPR3      equ      (NVIC_BASE + 0x10C)
+NVIC_ISPR4      equ      (NVIC_BASE + 0x110)
+NVIC_ISPR5      equ      (NVIC_BASE + 0x114)
+NVIC_ISPR6      equ      (NVIC_BASE + 0x118)
+NVIC_ISPR7      equ      (NVIC_BASE + 0x11C)
+
+NVIC_ICPR0      equ      (NVIC_BASE + 0x180) ; Offset: 0x180 (R/W)  Interrupt Clear Pending Register        */
+NVIC_ICPR1      equ      (NVIC_BASE + 0x184)
+NVIC_ICPR2      equ      (NVIC_BASE + 0x188)
+NVIC_ICPR3      equ      (NVIC_BASE + 0x18C)
+NVIC_ICPR4      equ      (NVIC_BASE + 0x190)
+NVIC_ICPR5      equ      (NVIC_BASE + 0x194)
+NVIC_ICPR6      equ      (NVIC_BASE + 0x198)	
+NVIC_ICPR7      equ      (NVIC_BASE + 0x19C)
+	
+
+NVIC_IABR0      equ      (NVIC_BASE + 0x200)  ; Offset: 0x200 (R/W)  Interrupt Active bit Register           */
+NVIC_IABR1      equ      (NVIC_BASE + 0x204)
+NVIC_IABR2      equ      (NVIC_BASE + 0x208)
+NVIC_IABR3      equ      (NVIC_BASE + 0x20C)
+NVIC_IABR4      equ      (NVIC_BASE + 0x210)
+NVIC_IABR5      equ      (NVIC_BASE + 0x214)
+NVIC_IABR6      equ      (NVIC_BASE + 0x218)
+NVIC_IABR7      equ      (NVIC_BASE + 0x21C)
+		
+NVIC_IPR0       equ      (NVIC_BASE + 0x300)  ; Offset: 0x300 (R/W)  Interrupt Priority Register (8Bit wide) */
 
 
 

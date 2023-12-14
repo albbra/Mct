@@ -133,8 +133,8 @@ __Vectors       DCD     __initial_sp               ; Top of Stack
                 DCD     SPI3_IRQHandler                   ; SPI3
                 DCD     UART4_IRQHandler                  ; UART4
                 DCD     UART5_IRQHandler                  ; UART5
-                DCD     TIM6_DAC_IRQHandler               ; TIM6 and DAC1&3 underrun errors
-                DCD     TIM7_DAC_IRQHandler               ; TIM7 and DAC2&4 underrun errors
+                DCD     TIM6_IRQHandler               ; TIM6 and DAC1&3 underrun errors
+                DCD     TIM7_IRQHandler               ; TIM7 and DAC2&4 underrun errors
                 DCD     DMA2_Channel1_IRQHandler          ; DMA2 Channel 1
                 DCD     DMA2_Channel2_IRQHandler          ; DMA2 Channel 2
                 DCD     DMA2_Channel3_IRQHandler          ; DMA2 Channel 3
@@ -301,8 +301,8 @@ Default_Handler PROC
         EXPORT     SPI3_IRQHandler                   [WEAK]
         EXPORT     UART4_IRQHandler                  [WEAK]
         EXPORT     UART5_IRQHandler                  [WEAK]
-        EXPORT     TIM6_DAC_IRQHandler               [WEAK]
-        EXPORT     TIM7_DAC_IRQHandler               [WEAK]
+        EXPORT     TIM6_IRQHandler                   [WEAK]
+        EXPORT     TIM7_IRQHandler                   [WEAK]
         EXPORT     DMA2_Channel1_IRQHandler          [WEAK]
         EXPORT     DMA2_Channel2_IRQHandler          [WEAK]
         EXPORT     DMA2_Channel3_IRQHandler          [WEAK]
@@ -403,8 +403,8 @@ TIM5_IRQHandler
 SPI3_IRQHandler
 UART4_IRQHandler
 UART5_IRQHandler
-TIM6_DAC_IRQHandler
-TIM7_DAC_IRQHandler
+TIM6_IRQHandler
+TIM7_IRQHandler
 DMA2_Channel1_IRQHandler
 DMA2_Channel2_IRQHandler
 DMA2_Channel3_IRQHandler
