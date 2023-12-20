@@ -40,13 +40,15 @@
 ; ------------------------------- exportierte Funktionen -----------------------------------		
 	EXPORT  main
     EXPORT  EXTI0_IRQHandler
+	EXPORT  EXTI1_IRQHandler
+	EXPORT  EXTI2_IRQHandler
     EXPORT  TIM6_IRQHandler
 		
 ; ------------------------------- importierte Funktionen -----------------------------------
     IMPORT  up_delay
 
 ; ------------------------------- symbolische Konstanten ------------------------------------
-ZAEHLERSTAND RN R1 ; nicht nötig?
+ZAEHLERSTAND RN R1
 ZEHNER 		 RN R2
 EINER 		 RN R3
 
@@ -92,28 +94,40 @@ main  PROC
     orr  R1, #0x01      ; Bit 0 -> SysCfg
     str  R1, [R0]
 	
-    ; Pin mapping
+    ; Pin mapping for EXTI0 (PC[0])
     ldr   R0, =SYSCFG_EXTICR1
-    mov   R1, #2        ; PC[3] -> EXTI_LINE0
+    mov   R1, #2        ; PC[0] -> EXTI_LINE0
     str   R1, [R0]       
+    ; Pin mapping for EXTI1 (PC[1])
+    mov   R1, #8        ; PC[1] -> EXTI_LINE1
+    str   R1, [R0]       
+    ; Pin mapping for EXTI2 (PC[2])
+    mov   R1, #16       ; PC[2] -> EXTI_LINE2
+    str   R1, [R0]      
 	
-    ; Triggerflanken
+    ; Triggerflanken for EXTI0
     ldr   R0, =EXTI_FTSR1
     mov   R1, #1        ; Bit 0 -> EXTI_LINE0
     str   R1, [R0] 
+    ; Triggerflanken for EXTI1
+    mov   R1, #2        ; Bit 1 -> EXTI_LINE1
+    str   R1, [R0] 
+    ; Triggerflanken for EXTI2
+    mov   R1, #4        ; Bit 2 -> EXTI_LINE2
+    str   R1, [R0] 
 
-    ; NVIC: EXTI Line0 Interrupt = ID 6 => ICPR0/ISER0
+    ; NVIC: EXTI Line0-2 Interrupts = ID 6, 7, 8 => ICPR0/ISER0
     ldr   R0, =NVIC_ICPR0 
-    mov   R1, #0x40      ; -> 0100:0000 -> 0x40
-    str   R1, [R0]       ; clear pending bit
-	
+    mov   R1, #(1 << 6) | (1 << 7) | (1 << 8)
+    str   R1, [R0]       ; clear pending bits
+    
     ldr   R0, =NVIC_ISER0 
-    mov   R1, #0x40      ; -> 0100:0000 -> 0x40
-    str   R1, [R0]       ; set enable bit
+    mov   R1, #(1 << 6) | (1 << 7) | (1 << 8)
+    str   R1, [R0]       ; set enable bits
 
-    ; EXTI Line0 Interrupt freigeben
+    ; EXTI Line0-2 Interrupts freigeben
     ldr   R0, =EXTI_IMR1 
-    mov   R1, #1         ; bit0 -> EXTI Line 0
+    mov   R1, #7         ; bit0-2 -> EXTI Line 0-2
     str   R1, [R0]       
 	
 
@@ -139,51 +153,265 @@ main  PROC
 	
 	; Timer 6: NVIC
     ldr   R0, =NVIC_ICPR1 ; clear pending bit 
-    mov   R1, #(1<<22)	
+    mov   R1, #(1<<22)    
     str   R1, [R0]   
     ldr   R0, =NVIC_ISER1 ; set enable bit
     mov   R1, #(1<<22)    
-    str   R1, [R0] 
+    str   R1, [R0]
   
-	MOV ZAEHLERSTAND, #0x3F ;nicht nötig ?
+	MOV ZAEHLERSTAND, #0x3F
 	MOV EINER, #0x3F
 	MOV ZEHNER, #0xBF  
   
-  	; Timer 6 Interrupt
-	PUSH {R8,R0,R14}
-	ldr  R0, =TIM6_DIER
+	; Timer 6 Interrupt
+    ldr  R0, =TIM6_DIER
     mov  R1, #1   ; -> update interrupt enable 
-	
     str  R1, [R0]
-	POP  {R8,R0,R14}
-    mov  R11, #0x01   ; Initialwert der LEDs
+	
+	B loop
 
 ; Endlosschleife
 loop 
 
+  B	loop
+
+;##########################################################
+;Zahl um 1 erhöhen
+zaehler
 	LDR  R0, =GPIOA_ODR
+	LDR R1, [R0]
+	
+	CMP EINER, #0x6F     ; 9 ? wenn ja -> 0
+	BNE nicht_neun
+	MOV EINER, #0x3F	
+	B nicht_null
+nicht_neun
+
+	CMP EINER, #0x7F     ; 8 ? wenn ja -> 9
+	BNE nicht_acht
+	MOV EINER, #0x6F
+nicht_acht
+
+	CMP EINER, #0x27     ; 7 ? wenn ja -> 8
+	BNE nicht_sieben
+	MOV EINER, #0x7F
+nicht_sieben
+
+	CMP EINER, #0x7D     ; 6 ? wenn ja -> 7
+	BNE nicht_sechs
+	MOV EINER, #0x27
+nicht_sechs
+
+	CMP EINER, #0x6D     ; 5 ? wenn ja -> 6
+	BNE nicht_fuenf
+	MOV EINER, #0x7D
+nicht_fuenf
+
+	CMP EINER, #0x66     ; 4 ? wenn ja -> 5
+	BNE nicht_vier
+	MOV EINER, #0x6D
+nicht_vier
+
+	CMP EINER, #0x4F     ; 3 ? wenn ja -> 4
+	BNE nicht_drei
+	MOV EINER, #0x66
+nicht_drei
+
+	CMP EINER, #0x5B     ; 2 ? wenn ja -> 3
+	BNE nicht_zwei
+	MOV EINER, #0x4F
+nicht_zwei
+
+	CMP EINER, #0x06     ; 1 ? wenn ja -> 2
+	BNE nicht_eins
+	MOV EINER, #0x5B
+nicht_eins
+
+	CMP EINER, #0x3F     ; 0 ? wenn ja -> 9
+	BNE nicht_null
+	MOV EINER, #0x06
 	STR  EINER, [R0]
+	;Zehnerstelle+1
+	B zeta 
 	
-	; 5ms warten -> 0.05s
-	MOV  R8, #2
-	BL   up_delay
+nicht_null
+
+	STR  EINER, [R0]
+
+	b z_nicht_null
 	
-	LDR  R0, =GPIOA_ODR
-	STR  ZEHNER, [R0]
+;#################################
+zeta ;Zehnerstelle 
+
+	CMP ZEHNER, #0xEF     ; 9 ? wenn ja -> 0
+	BNE z_nicht_neun
+	MOV ZEHNER, #0xBF	
+	B z_nicht_null
+z_nicht_neun
+
+	CMP ZEHNER, #0xFF     ; 8 ? wenn ja -> 9
+	BNE z_nicht_acht
+	MOV ZEHNER, #0xEF
+z_nicht_acht
+
+	CMP ZEHNER, #0xA7     ; 7 ? wenn ja -> 8
+	BNE z_nicht_sieben
+	MOV ZEHNER, #0xFF
+z_nicht_sieben
+
+	CMP ZEHNER, #0xFD     ; 6 ? wenn ja -> 7
+	BNE z_nicht_sechs
+	MOV ZEHNER, #0xA7
+z_nicht_sechs
+
+	CMP ZEHNER, #0xED     ; 5 ? wenn ja -> 6
+	BNE z_nicht_fuenf
+	MOV ZEHNER, #0xFD
+z_nicht_fuenf
+
+	CMP ZEHNER, #0xE6     ; 4 ? wenn ja -> 5
+	BNE z_nicht_vier
+	MOV ZEHNER, #0xED
+z_nicht_vier
+
+	CMP ZEHNER, #0xCF     ; 3 ? wenn ja -> 4
+	BNE z_nicht_drei
+	MOV ZEHNER, #0xE6
+z_nicht_drei
+
+	CMP ZEHNER, #0xDB     ; 2 ? wenn ja -> 3
+	BNE z_nicht_zwei
+	MOV ZEHNER, #0xCF
+z_nicht_zwei
+
+	CMP ZEHNER, #0x86     ; 1 ? wenn ja -> 2
+	BNE z_nicht_eins
+	MOV ZEHNER, #0xDB
+z_nicht_eins
+
+	CMP ZEHNER, #0xBF     ; 0 ? wenn ja -> 1
+	BNE z_nicht_null
+	MOV ZEHNER, #0x86
 	
-	; 5ms warten -> 0.05s
-	MOV  R8, #2
-	BL   up_delay
+z_nicht_null
+
+	STR ZEHNER, [R0]
 	
-    B	loop	
-
+	B loop
 	
+	ENDP
+
+; Timer 6 Interrupt Handler
+TIM6_IRQHandler PROC
+    ; Timer 6 abgelaufen
+    ; Zurücksetzen des Timers
+    ldr R0, =TIM6_SR
+    mov R1, #0
+    str R1, [R0]
+
+    ; Zähler erhöhen
+    BL zaehler
+
+    ; Schalten der LEDs
+    ldr R0, =GPIOA_ODR
+    ldr R1, [R0]
+    str R11, [R0]
+
+    bx lr
+    ENDP
+
+; External Interrupt Handler for EXTI0 (Button connected to PC[0])
+EXTI0_IRQHandler PROC
+	push {R4, R5, LR}
+
+    ; 10 ms warten (Tasterprellen)
+    mov R0, #10   ; nested UP-Aufruf
+    bl up_delay  ; -> LR sichern
+
+    ; Zustand des Lauflichtes ändern
+    ; 0(default): aus / 1 an
+    eor  R10, #1 ; toggelt Bit 0
+
+    ; Interrupt Flag zurücksetzen
+    ldr  R4, =EXTI_PR1
+    mov  R5, #1    ; clear by writing 1
+    str  R5, [R4]
+
+    ; Zähler erhöhen
+    BL zaehler
+
+    pop {R4, R5, LR}
+    bx lr
+    ENDP
 
 
-	ENDP				
+; External Interrupt Handler for EXTI1 (Button connected to PC[1])
+EXTI1_IRQHandler PROC
+    push {R4, R5, LR}
 
+    ; 10 ms warten (Tasterprellen)
+    mov R0, #10   ; nested UP-Aufruf
+    bl up_delay 
 
+    ; Zustand des Lauflichtes ändern
+    ; 0(default): aus / 1 an
+    ldr R4, =GPIOC_IDR
+    ldr R5, [R4]
+    tst R5, #0x00000002   ; Test Zustand des PC[1]
+    beq EXTI1_no_stop     ; Wenn Button 0 nicht gedrückt wurde -> Zustandswechsel
 
+    ; Stop-Funktionalität: Wenn Button 0 gedrückt wurde -> Timer stop
+    ldr R0, =TIM6_CR1
+    ldr R1, [R0]
+    bic R1, R1, #1    ; Clear Bit 0, um den Timer zu stoppen
+    str R1, [R0]
+
+EXTI1_no_stop
+    ; Interrupt Flag zurücksetzen
+    ldr R4, =EXTI_PR1
+    mov R5, #2    ; clear by writing 1
+    str R5, [R4]
+
+    ; Zähler erhöhen
+    BL zaehler
+
+    pop {R4, R5, LR}
+    bx lr
+    ENDP
+
+; External Interrupt Handler for EXTI2 (Button connected to PC[2])
+EXTI2_IRQHandler PROC
+    push {R4, R5, LR}
+
+    ; 10 ms warten (Tasterprellen)
+    mov R0, #10   ; nested UP-Aufruf
+    bl up_delay  
+
+    ; Zustand des Lauflichtes ändern
+    ; 0(default): aus / 1 an
+    ldr R4, =GPIOC_IDR
+    ldr R5, [R4]
+    tst R5, #0x00000004   ; Test Zustand des PC[2]
+    beq EXTI2_no_reset    ; Wenn Button 1 nicht gedrückt wurde -> Zustandswechsel 
+
+    ; Reset-Funktionalität: Wenn Button 1 gedrückt wurde -> Zähler zurücksetzen
+    MOV EINER, #0x3F
+    MOV ZEHNER, #0xBF
+
+EXTI2_no_reset
+    ; Interrupt Flag zurücksetzen
+    ldr R4, =EXTI_PR1
+    mov R5, #4    ; clear by writing 1
+    str R5, [R4]
+
+    ; Zähler erhöhen
+    BL zaehler
+
+    pop {R4, R5, LR}
+    bx lr
+    ENDP
+		
+    END
 
 
 ; ========================================================================================
@@ -218,28 +446,6 @@ loop
 ; |     15.10.2021        Peter Raab        initial version                              |
 ; |                                                                                      |
 ; ========================================================================================
-EXTI0_IRQHandler PROC
-	
-	push {R4, R5, LR}
-
-    ; 10 ms warten (Tasterprellen)
-    mov R0, #10   ; nested UP-Aufruf
-    bl  up_delay  ; -> LR sichern
-	
-    ; Zustand des Lauflichtes ändern
-    ; 0(default): aus / 1 an
-    eor  R10, #1 ; toggelt Bit 0
-
-    ; Interrupt Flag zurücksetzen
-    ldr  R4, =EXTI_PR1
-    mov  R5, #1    ; clear by writing 1
-    str  R5, [R4]
-
-    pop {R4, R5, LR}
-
-	bx lr
-
-	ENDP
 
 
 ; ========================================================================================
@@ -275,31 +481,3 @@ EXTI0_IRQHandler PROC
 ; |     02.11.2021        Peter Raab        initial version                              |
 ; |                                                                                      |
 ; ========================================================================================
-TIM6_IRQHandler PROC
-	
-	; zuruecksetzen des Timers
-	ldr R0, =TIM6_SR
-    mov R1, #0
-    str R1, [R0]
-
-    ; wenn LED aktiv
-	cmp R10, #0     ; wenn =0
-    beq norun       ; dann kein Weiterschalten
-
-		; Schieben der LEDs
-		lsl  R11, R11, #1
-		cmp  R11, #0x100
-		bne  weiter
-		  mov  R11, #0x01  ; und wieder von vorne
-weiter	
-
-		; Schalten der LEDs
-		ldr  R0, =GPIOA_ODR
-		str  R11, [R0]
-	
-norun
-	bx lr
-	
-	ENDP
-		
-    END
