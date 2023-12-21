@@ -102,11 +102,11 @@ ARM Macro Assembler    Page 2
    61 0000001C                 ENDP
    62 0000001C         
    63 0000001C                 END
-Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4.fp.sp 
---depend=.\objects\delay.d -o.\objects\delay.o -ID:\Keil\Pack\Keil\STM32G4xx_DF
-P\1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include --predefine="__UVISION_VERSIO
-N SETA 538" --predefine="STM32G474xx SETA 1" --list=.\listings\delay.lst delay.
-s
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp.sp --depen
+d=.\objects\delay.d -o.\objects\delay.o -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DF
+P\1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include -IC:\Keil_v5\ARM\CMSIS\Includ
+e --predefine="__UVISION_VERSION SETA 536" --predefine="STM32G474xx SETA 1" --l
+ist=.\listings\delay.lst delay.s
 
 
 

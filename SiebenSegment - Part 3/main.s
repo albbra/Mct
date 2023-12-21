@@ -43,6 +43,7 @@
 	EXPORT  EXTI1_IRQHandler
 	EXPORT  EXTI2_IRQHandler
     EXPORT  TIM6_IRQHandler
+	EXPORT	TIM7_IRQHandler
 		
 ; ------------------------------- importierte Funktionen -----------------------------------
     IMPORT  up_delay
@@ -53,7 +54,8 @@ ZEHNER 		 RN R2
 EINER 		 RN R3
 
 ; ------------------------------ Datensection / Variablen -----------------------------------		
-
+	AREA 	daten,	data
+COUNTER		DCB		0
 	
 ; ------------------------------- Codesection / Programm ------------------------------------
 	AREA	main_s, code
@@ -136,28 +138,49 @@ main  PROC
     ; Clock enable
     ldr  R0, =RCC_APB1ENR1 
     ldr  R1, [R0] 
-    orr  R1, #0x10      ; Bit 4 -> Timer 6
+    orr  R1, #0x30      ; Bit 4 -> Timer 6 und Bit 5 -> Timer 7
     str  R1, [R0]
 	; Prescale Register
     ldr  R0, =TIM6_PSC
     mov  R1, #(16000-1)   ; -> TC_CLK = 1 ms
     str  R1, [R0]	
+	; Prescale Register
+    ldr  R0, =TIM7_PSC
+    mov  R1, #(16000-1)   ; -> TC_CLK = 1 ms = 1000hz
+    strh R1, [R0]
     ; Auto-Reload Register
     ldr  R0, =TIM6_ARR
-    mov  R1, #499   ; -> T = 500 ms
+    mov  R1, #99  ; -> T = 100 ms
     str  R1, [R0] 
+	; Auto-Reload Register
+    ldr R0, =TIM7_ARR
+    mov R1, #9   ; -> T = 10 ms
+    str R1, [R0]
 	; Timer control register
 	ldr  R0, =TIM6_CR1
     mov  R1, #1   ; -> counter enable 
     str  R1, [R0] 	
+	; Timer control register
+	ldr R0, =TIM7_CR1
+    mov R1, #1   ; -> counter enable 
+    str R1, [R0] 
 	
 	; Timer 6: NVIC
-    ldr   R0, =NVIC_ICPR1 ; clear pending bit 
-    mov   R1, #(1<<22)    
-    str   R1, [R0]   
-    ldr   R0, =NVIC_ISER1 ; set enable bit
-    mov   R1, #(1<<22)    
-    str   R1, [R0]
+    ldr R0, =NVIC_ICPR1 ; clear pending bit 
+    mov R1, #(1<<22)	; IRQ54 -> Bitnummer
+    str R1, [R0] 		; 54 - 32 = 22
+
+	ldr R0, =NVIC_ICPR1 ; clear pending bit 
+    mov R1, #(1<<23)	; IRQ55 -> Bitnummer
+    str R1, [R0] 		; 55 - 32 = 23
+
+	ldr R0, =NVIC_ISER1 ; set enable bit / ab IRQ32: ISER1
+    mov R1, #(1<<22)    ; IRQ54 -> Bitnummer
+    str R1, [R0] 		; 54 - 32 = 22
+	
+	ldr R0, =NVIC_ISER1 ; set enable bit / ab IRQ32: ISER1
+    mov R1, #(1<<23)    ; IRQ55 -> Bitnummer
+    str R1, [R0] 		; 55 - 32 = 23
   
 	MOV ZAEHLERSTAND, #0x3F
 	MOV EINER, #0x3F
@@ -168,6 +191,10 @@ main  PROC
     mov  R1, #1   ; -> update interrupt enable 
     str  R1, [R0]
 	
+	ldr R0, =TIM7_DIER
+    mov R1, #1   
+	str	R1, [R0]
+	
 	B loop
 
 ; Endlosschleife
@@ -175,72 +202,16 @@ loop
 
   B	loop
 
-;##########################################################
-;Zahl um 1 erhöhen
-zaehler
-	LDR  R0, =GPIOA_ODR
-	LDR R1, [R0]
-	
-	CMP EINER, #0x6F     ; 9 ? wenn ja -> 0
-	BNE nicht_neun
-	MOV EINER, #0x3F	
-	B nicht_null
-nicht_neun
+	ENDP
 
-	CMP EINER, #0x7F     ; 8 ? wenn ja -> 9
-	BNE nicht_acht
-	MOV EINER, #0x6F
-nicht_acht
+; Timer 6 Interrupt Handler
+TIM6_IRQHandler PROC	;100ms
+    ; Timer 6 abgelaufen
+    ; Zurücksetzen des Timers
+    ldr R0, =TIM6_SR
+    mov R1, #0
+    str R1, [R0]
 
-	CMP EINER, #0x27     ; 7 ? wenn ja -> 8
-	BNE nicht_sieben
-	MOV EINER, #0x7F
-nicht_sieben
-
-	CMP EINER, #0x7D     ; 6 ? wenn ja -> 7
-	BNE nicht_sechs
-	MOV EINER, #0x27
-nicht_sechs
-
-	CMP EINER, #0x6D     ; 5 ? wenn ja -> 6
-	BNE nicht_fuenf
-	MOV EINER, #0x7D
-nicht_fuenf
-
-	CMP EINER, #0x66     ; 4 ? wenn ja -> 5
-	BNE nicht_vier
-	MOV EINER, #0x6D
-nicht_vier
-
-	CMP EINER, #0x4F     ; 3 ? wenn ja -> 4
-	BNE nicht_drei
-	MOV EINER, #0x66
-nicht_drei
-
-	CMP EINER, #0x5B     ; 2 ? wenn ja -> 3
-	BNE nicht_zwei
-	MOV EINER, #0x4F
-nicht_zwei
-
-	CMP EINER, #0x06     ; 1 ? wenn ja -> 2
-	BNE nicht_eins
-	MOV EINER, #0x5B
-nicht_eins
-
-	CMP EINER, #0x3F     ; 0 ? wenn ja -> 9
-	BNE nicht_null
-	MOV EINER, #0x06
-	STR  EINER, [R0]
-	;Zehnerstelle+1
-	B zeta 
-	
-nicht_null
-
-	STR  EINER, [R0]
-
-	b z_nicht_null
-	
-;#################################
 zeta ;Zehnerstelle 
 
 	CMP ZEHNER, #0xEF     ; 9 ? wenn ja -> 0
@@ -296,21 +267,6 @@ z_nicht_eins
 z_nicht_null
 
 	STR ZEHNER, [R0]
-	
-	B loop
-	
-	ENDP
-
-; Timer 6 Interrupt Handler
-TIM6_IRQHandler PROC
-    ; Timer 6 abgelaufen
-    ; Zurücksetzen des Timers
-    ldr R0, =TIM6_SR
-    mov R1, #0
-    str R1, [R0]
-
-    ; Zähler erhöhen
-    BL zaehler
 
     ; Schalten der LEDs
     ldr R0, =GPIOA_ODR
@@ -319,6 +275,93 @@ TIM6_IRQHandler PROC
 
     bx lr
     ENDP
+		
+TIM7_IRQHandler PROC			;10ms
+	; zuruecksetzen des Timers
+	ldr R1, =TIM7_SR
+	mov R4, #0
+	str R4, [R1]
+	
+	ldr R0, =COUNTER
+	
+;Einerstelle um 1 erhöhen
+zaehler
+	LDR  R0, =GPIOA_ODR
+	LDR R1, [R0]
+	
+	CMP EINER, #0x6F     ; 9 ? wenn ja -> 0
+	BNE nicht_neun
+	MOV EINER, #0x3F	
+	B nicht_null
+nicht_neun
+
+	CMP EINER, #0x7F     ; 8 ? wenn ja -> 9
+	BNE nicht_acht
+	MOV EINER, #0x6F
+nicht_acht
+
+	CMP EINER, #0x27     ; 7 ? wenn ja -> 8
+	BNE nicht_sieben
+	MOV EINER, #0x7F
+nicht_sieben
+
+	CMP EINER, #0x7D     ; 6 ? wenn ja -> 7
+	BNE nicht_sechs
+	MOV EINER, #0x27
+nicht_sechs
+
+	CMP EINER, #0x6D     ; 5 ? wenn ja -> 6
+	BNE nicht_fuenf
+	MOV EINER, #0x7D
+nicht_fuenf
+
+	CMP EINER, #0x66     ; 4 ? wenn ja -> 5
+	BNE nicht_vier
+	MOV EINER, #0x6D
+nicht_vier
+
+	CMP EINER, #0x4F     ; 3 ? wenn ja -> 4
+	BNE nicht_drei
+	MOV EINER, #0x66
+nicht_drei
+
+	CMP EINER, #0x5B     ; 2 ? wenn ja -> 3
+	BNE nicht_zwei
+	MOV EINER, #0x4F
+nicht_zwei
+
+	CMP EINER, #0x06     ; 1 ? wenn ja -> 2
+	BNE nicht_eins
+	MOV EINER, #0x5B
+nicht_eins
+
+	CMP EINER, #0x3F     ; 0 ? wenn ja -> 9
+	BNE nicht_null
+	MOV EINER, #0x06
+	STR  EINER, [R0]
+nicht_null
+	
+	LDR R0, =GPIOA_ODR
+	STR EINER, [R0]
+	
+	; 2ms warten 
+	MOV R8, #2
+	BL  up_delay
+	
+	LDR R0, =GPIOA_ODR
+	STR ZEHNER, [R0]
+	
+	; 2ms warten 
+	MOV R8, #2
+	BL  up_delay
+	
+	ldrb R1, [R0]
+	add R1, #1
+	str R1, [R0]
+	
+	bx 	LR
+	
+	ENDP
 
 ; External Interrupt Handler for EXTI0 (Button connected to PC[0])
 EXTI0_IRQHandler PROC
@@ -338,7 +381,7 @@ EXTI0_IRQHandler PROC
     str  R5, [R4]
 
     ; Zähler erhöhen
-    BL zaehler
+    ;BL zaehler
 
     pop {R4, R5, LR}
     bx lr
@@ -372,9 +415,6 @@ EXTI1_no_stop
     mov R5, #2    ; clear by writing 1
     str R5, [R4]
 
-    ; Zähler erhöhen
-    BL zaehler
-
     pop {R4, R5, LR}
     bx lr
     ENDP
@@ -403,9 +443,6 @@ EXTI2_no_reset
     ldr R4, =EXTI_PR1
     mov R5, #4    ; clear by writing 1
     str R5, [R4]
-
-    ; Zähler erhöhen
-    BL zaehler
 
     pop {R4, R5, LR}
     bx lr

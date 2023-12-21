@@ -2434,501 +2434,550 @@ ARM Macro Assembler    Page 38
    43 00000000                 EXPORT           EXTI1_IRQHandler
    44 00000000                 EXPORT           EXTI2_IRQHandler
    45 00000000                 EXPORT           TIM6_IRQHandler
-   46 00000000         
-   47 00000000         ; ------------------------------- importierte Funktionen
+   46 00000000                 EXPORT           TIM7_IRQHandler
+   47 00000000         
+   48 00000000         ; ------------------------------- importierte Funktionen
                         -----------------------------------
-   48 00000000                 IMPORT           up_delay
-   49 00000000         
-   50 00000000         ; ------------------------------- symbolische Konstanten
+   49 00000000                 IMPORT           up_delay
+   50 00000000         
+   51 00000000         ; ------------------------------- symbolische Konstanten
                         ------------------------------------
-   51 00000000        1 
+   52 00000000        1 
                        ZAEHLERSTAND
                                RN               R1
-   52 00000000        2 
+   53 00000000        2 
                        ZEHNER  RN               R2
-   53 00000000        3 
+   54 00000000        3 
                        EINER   RN               R3
-   54 00000000         
-   55 00000000         ; ------------------------------ Datensection / Variable
+   55 00000000         
+   56 00000000         ; ------------------------------ Datensection / Variable
                        n -----------------------------------  
-   56 00000000         
-   57 00000000         
-   58 00000000         ; ------------------------------- Codesection / Programm
+   57 00000000                 AREA             daten, data
+   58 00000000 00      COUNTER DCB              0
+   59 00000001         
+   60 00000001         ; ------------------------------- Codesection / Programm
                         ------------------------------------
-   59 00000000                 AREA             main_s, code
-   60 00000000         
-   61 00000000         
+   61 00000001                 AREA             main_s, code
    62 00000000         
-   63 00000000         ; Einsprungpunkt  
-   64 00000000         main    PROC
-   65 00000000         ;#################################
-   66 00000000         ; Konfiguration der Portpins PA[7:0] fuer LEDs 
-   67 00000000 4881            ldr              R0, =RCC_AHB2ENR
-   68 00000002 F04F 0105       ldr              R1, =5      ; enable Port A+C  
+   63 00000000         
+   64 00000000         
+   65 00000000         ; Einsprungpunkt  
+   66 00000000         main    PROC
+   67 00000000         ;#################################
+   68 00000000         ; Konfiguration der Portpins PA[7:0] fuer LEDs 
+   69 00000000 4892            ldr              R0, =RCC_AHB2ENR
+   70 00000002 F04F 0105       ldr              R1, =5      ; enable Port A+C  
                                                             (Bit 0 und 2)
-   69 00000006 6001            str              R1, [R0]
-   70 00000008         
 
 
 
 ARM Macro Assembler    Page 39 
 
 
-   71 00000008 F04F 4090       ldr              R0, =GPIOA_MODER
-   72 0000000C 6801            ldr              R1, [R0]    ; Reset Value for P
+   71 00000006 6001            str              R1, [R0]
+   72 00000008         
+   73 00000008 F04F 4090       ldr              R0, =GPIOA_MODER
+   74 0000000C 6801            ldr              R1, [R0]    ; Reset Value for P
                                                             ort A =0xABFFFFFF (
                                                             Alternate Functions
                                                              for JTAG /SWD)
-   73 0000000E 4A7F            ldr              R2, =0xFFFF0000 ; Maskierung de
+   75 0000000E 4A90            ldr              R2, =0xFFFF0000 ; Maskierung de
                                                             r Pins [7:0]
-   74 00000010 EA01 0102       and              R1, R1, R2
-   75 00000014 F245 5255       ldr              R2, =0x00005555 ; 01: General O
+   76 00000010 EA01 0102       and              R1, R1, R2
+   77 00000014 F245 5255       ldr              R2, =0x00005555 ; 01: General O
                                                             utput Mode
-   76 00000018 EA41 0102       orr              R1, R2
-   77 0000001C 6001            str              R1, [R0]
-   78 0000001E         
-   79 0000001E         
-   80 0000001E         ;#################################
-   81 0000001E         ; Konfiguration des Portpins PC[0], PC[1] und PC[2] fuer
+   78 00000018 EA41 0102       orr              R1, R2
+   79 0000001C 6001            str              R1, [R0]
+   80 0000001E         
+   81 0000001E         
+   82 0000001E         ;#################################
+   83 0000001E         ; Konfiguration des Portpins PC[0], PC[1] und PC[2] fuer
                         Button
-   82 0000001E 487C            ldr              R0, =GPIOC_MODER
-   83 00000020 6801            ldr              R1, [R0]
-   84 00000022 F06F 023F       ldr              R2, =0xFFFFFFC0 ; Maskierung de
+   84 0000001E 488D            ldr              R0, =GPIOC_MODER
+   85 00000020 6801            ldr              R1, [R0]
+   86 00000022 F06F 023F       ldr              R2, =0xFFFFFFC0 ; Maskierung de
                                                             r Bits [5:0]
-   85 00000026 EA01 0102       and              R1, R1, R2  ; Bits [0:5] = 00 =
+   87 00000026 EA01 0102       and              R1, R1, R2  ; Bits [0:5] = 00 =
                                                             > Input Mode
-   86 0000002A 6001            str              R1, [R0]
-   87 0000002C         
-   88 0000002C         
-   89 0000002C         ;###################################################
-   90 0000002C         ; Konfiguration des externen Interrupts
-   91 0000002C         ; Clock enable
-   92 0000002C 4879            ldr              R0, =RCC_APB2ENR
-   93 0000002E 6801            ldr              R1, [R0]
-   94 00000030 F041 0101       orr              R1, #0x01   ; Bit 0 -> SysCfg
-   95 00000034 6001            str              R1, [R0]
-   96 00000036         
-   97 00000036         ; Pin mapping for EXTI0 (PC[0])
-   98 00000036 4878            ldr              R0, =SYSCFG_EXTICR1
-   99 00000038 F04F 0102       mov              R1, #2      ; PC[0] -> EXTI_LIN
+   88 0000002A 6001            str              R1, [R0]
+   89 0000002C         
+   90 0000002C         
+   91 0000002C         ;###################################################
+   92 0000002C         ; Konfiguration des externen Interrupts
+   93 0000002C         ; Clock enable
+   94 0000002C 488A            ldr              R0, =RCC_APB2ENR
+   95 0000002E 6801            ldr              R1, [R0]
+   96 00000030 F041 0101       orr              R1, #0x01   ; Bit 0 -> SysCfg
+   97 00000034 6001            str              R1, [R0]
+   98 00000036         
+   99 00000036         ; Pin mapping for EXTI0 (PC[0])
+  100 00000036 4889            ldr              R0, =SYSCFG_EXTICR1
+  101 00000038 F04F 0102       mov              R1, #2      ; PC[0] -> EXTI_LIN
                                                             E0
-  100 0000003C 6001            str              R1, [R0]
-  101 0000003E         ; Pin mapping for EXTI1 (PC[1])
-  102 0000003E F04F 0108       mov              R1, #8      ; PC[1] -> EXTI_LIN
+  102 0000003C 6001            str              R1, [R0]
+  103 0000003E         ; Pin mapping for EXTI1 (PC[1])
+  104 0000003E F04F 0108       mov              R1, #8      ; PC[1] -> EXTI_LIN
                                                             E1
-  103 00000042 6001            str              R1, [R0]
-  104 00000044         ; Pin mapping for EXTI2 (PC[2])
-  105 00000044 F04F 0110       mov              R1, #16     ; PC[2] -> EXTI_LIN
+  105 00000042 6001            str              R1, [R0]
+  106 00000044         ; Pin mapping for EXTI2 (PC[2])
+  107 00000044 F04F 0110       mov              R1, #16     ; PC[2] -> EXTI_LIN
                                                             E2
-  106 00000048 6001            str              R1, [R0]
-  107 0000004A         
-  108 0000004A         ; Triggerflanken for EXTI0
-  109 0000004A 4874            ldr              R0, =EXTI_FTSR1
-  110 0000004C F04F 0101       mov              R1, #1      ; Bit 0 -> EXTI_LIN
+  108 00000048 6001            str              R1, [R0]
+  109 0000004A         
+  110 0000004A         ; Triggerflanken for EXTI0
+  111 0000004A 4885            ldr              R0, =EXTI_FTSR1
+  112 0000004C F04F 0101       mov              R1, #1      ; Bit 0 -> EXTI_LIN
                                                             E0
-  111 00000050 6001            str              R1, [R0]
-  112 00000052         ; Triggerflanken for EXTI1
-  113 00000052 F04F 0102       mov              R1, #2      ; Bit 1 -> EXTI_LIN
+  113 00000050 6001            str              R1, [R0]
+  114 00000052         ; Triggerflanken for EXTI1
+  115 00000052 F04F 0102       mov              R1, #2      ; Bit 1 -> EXTI_LIN
                                                             E1
-  114 00000056 6001            str              R1, [R0]
-  115 00000058         ; Triggerflanken for EXTI2
-  116 00000058 F04F 0104       mov              R1, #4      ; Bit 2 -> EXTI_LIN
+  116 00000056 6001            str              R1, [R0]
 
 
 
 ARM Macro Assembler    Page 40 
 
 
+  117 00000058         ; Triggerflanken for EXTI2
+  118 00000058 F04F 0104       mov              R1, #4      ; Bit 2 -> EXTI_LIN
                                                             E2
-  117 0000005C 6001            str              R1, [R0]
-  118 0000005E         
-  119 0000005E         ; NVIC: EXTI Line0-2 Interrupts = ID 6, 7, 8 => ICPR0/IS
+  119 0000005C 6001            str              R1, [R0]
+  120 0000005E         
+  121 0000005E         ; NVIC: EXTI Line0-2 Interrupts = ID 6, 7, 8 => ICPR0/IS
                        ER0
-  120 0000005E 4870            ldr              R0, =NVIC_ICPR0
-  121 00000060 F44F 71E0       mov              R1, #(1 << 6) | (1 << 7) | (1 <
+  122 0000005E 4881            ldr              R0, =NVIC_ICPR0
+  123 00000060 F44F 71E0       mov              R1, #(1 << 6) | (1 << 7) | (1 <
 < 8)
-  122 00000064 6001            str              R1, [R0]    ; clear pending bit
+  124 00000064 6001            str              R1, [R0]    ; clear pending bit
                                                             s
-  123 00000066         
-  124 00000066 486F            ldr              R0, =NVIC_ISER0
-  125 00000068 F44F 71E0       mov              R1, #(1 << 6) | (1 << 7) | (1 <
+  125 00000066         
+  126 00000066 4880            ldr              R0, =NVIC_ISER0
+  127 00000068 F44F 71E0       mov              R1, #(1 << 6) | (1 << 7) | (1 <
 < 8)
-  126 0000006C 6001            str              R1, [R0]    ; set enable bits
-  127 0000006E         
-  128 0000006E         ; EXTI Line0-2 Interrupts freigeben
-  129 0000006E 486E            ldr              R0, =EXTI_IMR1
-  130 00000070 F04F 0107       mov              R1, #7      ; bit0-2 -> EXTI Li
+  128 0000006C 6001            str              R1, [R0]    ; set enable bits
+  129 0000006E         
+  130 0000006E         ; EXTI Line0-2 Interrupts freigeben
+  131 0000006E 487F            ldr              R0, =EXTI_IMR1
+  132 00000070 F04F 0107       mov              R1, #7      ; bit0-2 -> EXTI Li
                                                             ne 0-2
-  131 00000074 6001            str              R1, [R0]
-  132 00000076         
-  133 00000076         
-  134 00000076         ;###################################################
-  135 00000076         ; Konfiguration des Timers 6
-  136 00000076         ; Clock enable
-  137 00000076 486D            ldr              R0, =RCC_APB1ENR1
-  138 00000078 6801            ldr              R1, [R0]
-  139 0000007A F041 0110       orr              R1, #0x10   ; Bit 4 -> Timer 6
-  140 0000007E 6001            str              R1, [R0]
-  141 00000080         ; Prescale Register
-  142 00000080 486B            ldr              R0, =TIM6_PSC
-  143 00000082 F643 617F       mov              R1, #(16000-1) 
+  133 00000074 6001            str              R1, [R0]
+  134 00000076         
+  135 00000076         
+  136 00000076         ;###################################################
+  137 00000076         ; Konfiguration des Timers 6
+  138 00000076         ; Clock enable
+  139 00000076 487E            ldr              R0, =RCC_APB1ENR1
+  140 00000078 6801            ldr              R1, [R0]
+  141 0000007A F041 0130       orr              R1, #0x30   ; Bit 4 -> Timer 6 
+                                                            und Bit 5 -> Timer 
+                                                            7
+  142 0000007E 6001            str              R1, [R0]
+  143 00000080         ; Prescale Register
+  144 00000080 487C            ldr              R0, =TIM6_PSC
+  145 00000082 F643 617F       mov              R1, #(16000-1) 
                                                             ; -> TC_CLK = 1 ms
-  144 00000086 6001            str              R1, [R0]
-  145 00000088         ; Auto-Reload Register
-  146 00000088 486A            ldr              R0, =TIM6_ARR
-  147 0000008A F240 11F3       mov              R1, #499    ; -> T = 500 ms
-  148 0000008E 6001            str              R1, [R0]
-  149 00000090         ; Timer control register
-  150 00000090 4869            ldr              R0, =TIM6_CR1
-  151 00000092 F04F 0101       mov              R1, #1      ; -> counter enable
+  146 00000086 6001            str              R1, [R0]
+  147 00000088         ; Prescale Register
+  148 00000088 487B            ldr              R0, =TIM7_PSC
+  149 0000008A F643 617F       mov              R1, #(16000-1) ; -> TC_CLK = 1 
+                                                            ms = 1000hz
+  150 0000008E 8001            strh             R1, [R0]
+  151 00000090         ; Auto-Reload Register
+  152 00000090 487A            ldr              R0, =TIM6_ARR
+  153 00000092 F04F 0163       mov              R1, #99     ; -> T = 100 ms
+  154 00000096 6001            str              R1, [R0]
+  155 00000098         ; Auto-Reload Register
+  156 00000098 4879            ldr              R0, =TIM7_ARR
+  157 0000009A F04F 0109       mov              R1, #9      ; -> T = 10 ms
+  158 0000009E 6001            str              R1, [R0]
+  159 000000A0         ; Timer control register
+  160 000000A0 4878            ldr              R0, =TIM6_CR1
+  161 000000A2 F04F 0101       mov              R1, #1      ; -> counter enable
                                                              
-  152 00000096 6001            str              R1, [R0]
-  153 00000098         
-  154 00000098         ; Timer 6: NVIC
-  155 00000098 4868            ldr              R0, =NVIC_ICPR1 ; clear pending
-                                                             bit 
-  156 0000009A F44F 0180       mov              R1, #(1<<22)
-  157 0000009E 6001            str              R1, [R0]
-  158 000000A0 4867            ldr              R0, =NVIC_ISER1 
-                                                            ; set enable bit
-  159 000000A2 F44F 0180       mov              R1, #(1<<22)
-  160 000000A6 6001            str              R1, [R0]
-  161 000000A8         
-  162 000000A8 F04F 013F       MOV              ZAEHLERSTAND, #0x3F
-  163 000000AC F04F 033F       MOV              EINER, #0x3F
-  164 000000B0 F04F 02BF       MOV              ZEHNER, #0xBF
-  165 000000B4         
+  162 000000A6 6001            str              R1, [R0]
+  163 000000A8         ; Timer control register
+  164 000000A8 4877            ldr              R0, =TIM7_CR1
 
 
 
 ARM Macro Assembler    Page 41 
 
 
-  166 000000B4         ; Timer 6 Interrupt
-  167 000000B4 4863            ldr              R0, =TIM6_DIER
-  168 000000B6 F04F 0101       mov              R1, #1      ; -> update interru
+  165 000000AA F04F 0101       mov              R1, #1      ; -> counter enable
+                                                             
+  166 000000AE 6001            str              R1, [R0]
+  167 000000B0         
+  168 000000B0         ; Timer 6: NVIC
+  169 000000B0 4876            ldr              R0, =NVIC_ICPR1 ; clear pending
+                                                             bit 
+  170 000000B2 F44F 0180       mov              R1, #(1<<22) ; IRQ54 -> Bitnumm
+                                                            er
+  171 000000B6 6001            str              R1, [R0]    ; 54 - 32 = 22
+  172 000000B8         
+  173 000000B8 4874            ldr              R0, =NVIC_ICPR1 ; clear pending
+                                                             bit 
+  174 000000BA F44F 0100       mov              R1, #(1<<23) ; IRQ55 -> Bitnumm
+                                                            er
+  175 000000BE 6001            str              R1, [R0]    ; 55 - 32 = 23
+  176 000000C0         
+  177 000000C0 4873            ldr              R0, =NVIC_ISER1 ; set enable bi
+                                                            t / ab IRQ32: ISER1
+                                                            
+  178 000000C2 F44F 0180       mov              R1, #(1<<22) ; IRQ54 -> Bitnumm
+                                                            er
+  179 000000C6 6001            str              R1, [R0]    ; 54 - 32 = 22
+  180 000000C8         
+  181 000000C8 4871            ldr              R0, =NVIC_ISER1 ; set enable bi
+                                                            t / ab IRQ32: ISER1
+                                                            
+  182 000000CA F44F 0100       mov              R1, #(1<<23) ; IRQ55 -> Bitnumm
+                                                            er
+  183 000000CE 6001            str              R1, [R0]    ; 55 - 32 = 23
+  184 000000D0         
+  185 000000D0 F04F 013F       MOV              ZAEHLERSTAND, #0x3F
+  186 000000D4 F04F 033F       MOV              EINER, #0x3F
+  187 000000D8 F04F 02BF       MOV              ZEHNER, #0xBF
+  188 000000DC         
+  189 000000DC         ; Timer 6 Interrupt
+  190 000000DC 486D            ldr              R0, =TIM6_DIER
+  191 000000DE F04F 0101       mov              R1, #1      ; -> update interru
                                                             pt enable 
-  169 000000BA 6001            str              R1, [R0]
-  170 000000BC         
-  171 000000BC E7FF            B                loop
-  172 000000BE         
-  173 000000BE         ; Endlosschleife
-  174 000000BE         loop
-  175 000000BE         
-  176 000000BE E7FE            B                loop
-  177 000000C0         
-  178 000000C0         ;#######################################################
-                       ###
-  179 000000C0         ;Zahl um 1 erhöhen
-  180 000000C0         zaehler
-  181 000000C0 4861            LDR              R0, =GPIOA_ODR
-  182 000000C2 6801            LDR              R1, [R0]
-  183 000000C4         
-  184 000000C4 2B6F            CMP              EINER, #0x6F ; 9 ? wenn ja -> 0
-                                                            
-  185 000000C6 D102            BNE              nicht_neun
-  186 000000C8 F04F 033F       MOV              EINER, #0x3F
-  187 000000CC E025            B                nicht_null
-  188 000000CE         nicht_neun
-  189 000000CE         
-  190 000000CE 2B7F            CMP              EINER, #0x7F ; 8 ? wenn ja -> 9
-                                                            
-  191 000000D0 D101            BNE              nicht_acht
-  192 000000D2 F04F 036F       MOV              EINER, #0x6F
-  193 000000D6         nicht_acht
-  194 000000D6         
-  195 000000D6 2B27            CMP              EINER, #0x27 ; 7 ? wenn ja -> 8
-                                                            
-  196 000000D8 D101            BNE              nicht_sieben
-  197 000000DA F04F 037F       MOV              EINER, #0x7F
-  198 000000DE         nicht_sieben
-  199 000000DE         
-  200 000000DE 2B7D            CMP              EINER, #0x7D ; 6 ? wenn ja -> 7
-                                                            
-  201 000000E0 D101            BNE              nicht_sechs
-  202 000000E2 F04F 0327       MOV              EINER, #0x27
-  203 000000E6         nicht_sechs
-  204 000000E6         
-  205 000000E6 2B6D            CMP              EINER, #0x6D ; 5 ? wenn ja -> 6
-                                                            
-  206 000000E8 D101            BNE              nicht_fuenf
-  207 000000EA F04F 037D       MOV              EINER, #0x7D
-  208 000000EE         nicht_fuenf
-  209 000000EE         
-  210 000000EE 2B66            CMP              EINER, #0x66 ; 4 ? wenn ja -> 5
-                                                            
-  211 000000F0 D101            BNE              nicht_vier
-  212 000000F2 F04F 036D       MOV              EINER, #0x6D
-  213 000000F6         nicht_vier
-  214 000000F6         
-  215 000000F6 2B4F            CMP              EINER, #0x4F ; 3 ? wenn ja -> 4
-                                                            
+  192 000000E2 6001            str              R1, [R0]
+  193 000000E4         
+  194 000000E4 486C            ldr              R0, =TIM7_DIER
+  195 000000E6 F04F 0101       mov              R1, #1
+  196 000000EA 6001            str              R1, [R0]
+  197 000000EC         
+  198 000000EC E7FF            B                loop
+  199 000000EE         
+  200 000000EE         ; Endlosschleife
+  201 000000EE         loop
+  202 000000EE         
+  203 000000EE E7FE            B                loop
+  204 000000F0         
+  205 000000F0                 ENDP
+  206 000000F0         
+  207 000000F0         ; Timer 6 Interrupt Handler
+  208 000000F0         TIM6_IRQHandler
+                               PROC                         ;100ms
+  209 000000F0         ; Timer 6 abgelaufen
+  210 000000F0         ; Zurücksetzen des Timers
 
 
 
 ARM Macro Assembler    Page 42 
 
 
-  216 000000F8 D101            BNE              nicht_drei
-  217 000000FA F04F 0366       MOV              EINER, #0x66
-  218 000000FE         nicht_drei
-  219 000000FE         
-  220 000000FE 2B5B            CMP              EINER, #0x5B ; 2 ? wenn ja -> 3
-                                                            
-  221 00000100 D101            BNE              nicht_zwei
-  222 00000102 F04F 034F       MOV              EINER, #0x4F
-  223 00000106         nicht_zwei
-  224 00000106         
-  225 00000106 2B06            CMP              EINER, #0x06 ; 1 ? wenn ja -> 2
-                                                            
-  226 00000108 D101            BNE              nicht_eins
-  227 0000010A F04F 035B       MOV              EINER, #0x5B
-  228 0000010E         nicht_eins
-  229 0000010E         
-  230 0000010E 2B3F            CMP              EINER, #0x3F ; 0 ? wenn ja -> 9
-                                                            
-  231 00000110 D103            BNE              nicht_null
-  232 00000112 F04F 0306       MOV              EINER, #0x06
-  233 00000116 6003            STR              EINER, [R0]
-  234 00000118         ;Zehnerstelle+1
-  235 00000118 E001            B                zeta
-  236 0000011A         
-  237 0000011A         nicht_null
-  238 0000011A         
-  239 0000011A 6003            STR              EINER, [R0]
-  240 0000011C         
-  241 0000011C E028            b                z_nicht_null
-  242 0000011E         
-  243 0000011E         ;#################################
-  244 0000011E         zeta                                 ;Zehnerstelle 
-  245 0000011E         
-  246 0000011E 2AEF            CMP              ZEHNER, #0xEF 
+  211 000000F0 486A            ldr              R0, =TIM6_SR
+  212 000000F2 F04F 0100       mov              R1, #0
+  213 000000F6 6001            str              R1, [R0]
+  214 000000F8         
+  215 000000F8         zeta                                 ;Zehnerstelle 
+  216 000000F8         
+  217 000000F8 2AEF            CMP              ZEHNER, #0xEF 
                                                             ; 9 ? wenn ja -> 0
-  247 00000120 D102            BNE              z_nicht_neun
-  248 00000122 F04F 02BF       MOV              ZEHNER, #0xBF
-  249 00000126 E023            B                z_nicht_null
-  250 00000128         z_nicht_neun
-  251 00000128         
-  252 00000128 2AFF            CMP              ZEHNER, #0xFF 
+  218 000000FA D102            BNE              z_nicht_neun
+  219 000000FC F04F 02BF       MOV              ZEHNER, #0xBF
+  220 00000100 E023            B                z_nicht_null
+  221 00000102         z_nicht_neun
+  222 00000102         
+  223 00000102 2AFF            CMP              ZEHNER, #0xFF 
                                                             ; 8 ? wenn ja -> 9
-  253 0000012A D101            BNE              z_nicht_acht
-  254 0000012C F04F 02EF       MOV              ZEHNER, #0xEF
-  255 00000130         z_nicht_acht
-  256 00000130         
-  257 00000130 2AA7            CMP              ZEHNER, #0xA7 
+  224 00000104 D101            BNE              z_nicht_acht
+  225 00000106 F04F 02EF       MOV              ZEHNER, #0xEF
+  226 0000010A         z_nicht_acht
+  227 0000010A         
+  228 0000010A 2AA7            CMP              ZEHNER, #0xA7 
                                                             ; 7 ? wenn ja -> 8
-  258 00000132 D101            BNE              z_nicht_sieben
-  259 00000134 F04F 02FF       MOV              ZEHNER, #0xFF
-  260 00000138         z_nicht_sieben
-  261 00000138         
-  262 00000138 2AFD            CMP              ZEHNER, #0xFD 
+  229 0000010C D101            BNE              z_nicht_sieben
+  230 0000010E F04F 02FF       MOV              ZEHNER, #0xFF
+  231 00000112         z_nicht_sieben
+  232 00000112         
+  233 00000112 2AFD            CMP              ZEHNER, #0xFD 
                                                             ; 6 ? wenn ja -> 7
-  263 0000013A D101            BNE              z_nicht_sechs
-  264 0000013C F04F 02A7       MOV              ZEHNER, #0xA7
-  265 00000140         z_nicht_sechs
-  266 00000140         
-  267 00000140 2AED            CMP              ZEHNER, #0xED 
+  234 00000114 D101            BNE              z_nicht_sechs
+  235 00000116 F04F 02A7       MOV              ZEHNER, #0xA7
+  236 0000011A         z_nicht_sechs
+  237 0000011A         
+  238 0000011A 2AED            CMP              ZEHNER, #0xED 
+                                                            ; 5 ? wenn ja -> 6
+  239 0000011C D101            BNE              z_nicht_fuenf
+  240 0000011E F04F 02FD       MOV              ZEHNER, #0xFD
+  241 00000122         z_nicht_fuenf
+  242 00000122         
+  243 00000122 2AE6            CMP              ZEHNER, #0xE6 
+                                                            ; 4 ? wenn ja -> 5
+  244 00000124 D101            BNE              z_nicht_vier
+  245 00000126 F04F 02ED       MOV              ZEHNER, #0xED
+  246 0000012A         z_nicht_vier
+  247 0000012A         
+  248 0000012A 2ACF            CMP              ZEHNER, #0xCF 
+                                                            ; 3 ? wenn ja -> 4
+  249 0000012C D101            BNE              z_nicht_drei
+  250 0000012E F04F 02E6       MOV              ZEHNER, #0xE6
+  251 00000132         z_nicht_drei
+  252 00000132         
+  253 00000132 2ADB            CMP              ZEHNER, #0xDB 
+                                                            ; 2 ? wenn ja -> 3
+  254 00000134 D101            BNE              z_nicht_zwei
+  255 00000136 F04F 02CF       MOV              ZEHNER, #0xCF
+  256 0000013A         z_nicht_zwei
+  257 0000013A         
+  258 0000013A 2A86            CMP              ZEHNER, #0x86 
+                                                            ; 1 ? wenn ja -> 2
+  259 0000013C D101            BNE              z_nicht_eins
+  260 0000013E F04F 02DB       MOV              ZEHNER, #0xDB
 
 
 
 ARM Macro Assembler    Page 43 
 
 
-                                                            ; 5 ? wenn ja -> 6
-  268 00000142 D101            BNE              z_nicht_fuenf
-  269 00000144 F04F 02FD       MOV              ZEHNER, #0xFD
-  270 00000148         z_nicht_fuenf
-  271 00000148         
-  272 00000148 2AE6            CMP              ZEHNER, #0xE6 
-                                                            ; 4 ? wenn ja -> 5
-  273 0000014A D101            BNE              z_nicht_vier
-  274 0000014C F04F 02ED       MOV              ZEHNER, #0xED
-  275 00000150         z_nicht_vier
-  276 00000150         
-  277 00000150 2ACF            CMP              ZEHNER, #0xCF 
-                                                            ; 3 ? wenn ja -> 4
-  278 00000152 D101            BNE              z_nicht_drei
-  279 00000154 F04F 02E6       MOV              ZEHNER, #0xE6
-  280 00000158         z_nicht_drei
-  281 00000158         
-  282 00000158 2ADB            CMP              ZEHNER, #0xDB 
-                                                            ; 2 ? wenn ja -> 3
-  283 0000015A D101            BNE              z_nicht_zwei
-  284 0000015C F04F 02CF       MOV              ZEHNER, #0xCF
-  285 00000160         z_nicht_zwei
-  286 00000160         
-  287 00000160 2A86            CMP              ZEHNER, #0x86 
-                                                            ; 1 ? wenn ja -> 2
-  288 00000162 D101            BNE              z_nicht_eins
-  289 00000164 F04F 02DB       MOV              ZEHNER, #0xDB
-  290 00000168         z_nicht_eins
-  291 00000168         
-  292 00000168 2ABF            CMP              ZEHNER, #0xBF 
+  261 00000142         z_nicht_eins
+  262 00000142         
+  263 00000142 2ABF            CMP              ZEHNER, #0xBF 
                                                             ; 0 ? wenn ja -> 1
-  293 0000016A D101            BNE              z_nicht_null
-  294 0000016C F04F 0286       MOV              ZEHNER, #0x86
-  295 00000170         
-  296 00000170         z_nicht_null
-  297 00000170         
-  298 00000170 6002            STR              ZEHNER, [R0]
-  299 00000172         
-  300 00000172 E7A4            B                loop
-  301 00000174         
-  302 00000174                 ENDP
-  303 00000174         
-  304 00000174         ; Timer 6 Interrupt Handler
-  305 00000174         TIM6_IRQHandler
-                               PROC
-  306 00000174         ; Timer 6 abgelaufen
-  307 00000174         ; Zurücksetzen des Timers
-  308 00000174 4835            ldr              R0, =TIM6_SR
-  309 00000176 F04F 0100       mov              R1, #0
-  310 0000017A 6001            str              R1, [R0]
-  311 0000017C         
-  312 0000017C         ; Zähler erhöhen
-  313 0000017C F7FF FFA0       BL               zaehler
-  314 00000180         
-  315 00000180         ; Schalten der LEDs
-  316 00000180 4831            ldr              R0, =GPIOA_ODR
-  317 00000182 6801            ldr              R1, [R0]
-  318 00000184 F8C0 B000       str              R11, [R0]
-  319 00000188         
+  264 00000144 D101            BNE              z_nicht_null
+  265 00000146 F04F 0286       MOV              ZEHNER, #0x86
+  266 0000014A         
+  267 0000014A         z_nicht_null
+  268 0000014A         
+  269 0000014A 6002            STR              ZEHNER, [R0]
+  270 0000014C         
+  271 0000014C         ; Schalten der LEDs
+  272 0000014C 4854            ldr              R0, =GPIOA_ODR
+  273 0000014E 6801            ldr              R1, [R0]
+  274 00000150 F8C0 B000       str              R11, [R0]
+  275 00000154         
+  276 00000154 4770            bx               lr
+  277 00000156                 ENDP
+  278 00000156         
+  279 00000156         TIM7_IRQHandler
+                               PROC                         ;10ms
+  280 00000156         ; zuruecksetzen des Timers
+  281 00000156 4953            ldr              R1, =TIM7_SR
+  282 00000158 F04F 0400       mov              R4, #0
+  283 0000015C 600C            str              R4, [R1]
+  284 0000015E         
+  285 0000015E 4852            ldr              R0, =COUNTER
+  286 00000160         
+  287 00000160         ;Einerstelle um 1 erhöhen
+  288 00000160         zaehler
+  289 00000160 484F            LDR              R0, =GPIOA_ODR
+  290 00000162 6801            LDR              R1, [R0]
+  291 00000164         
+  292 00000164 2B6F            CMP              EINER, #0x6F ; 9 ? wenn ja -> 0
+                                                            
+  293 00000166 D102            BNE              nicht_neun
+  294 00000168 F04F 033F       MOV              EINER, #0x3F
+  295 0000016C E024            B                nicht_null
+  296 0000016E         nicht_neun
+  297 0000016E         
+  298 0000016E 2B7F            CMP              EINER, #0x7F ; 8 ? wenn ja -> 9
+                                                            
+  299 00000170 D101            BNE              nicht_acht
+  300 00000172 F04F 036F       MOV              EINER, #0x6F
+  301 00000176         nicht_acht
+  302 00000176         
+  303 00000176 2B27            CMP              EINER, #0x27 ; 7 ? wenn ja -> 8
+                                                            
+  304 00000178 D101            BNE              nicht_sieben
+  305 0000017A F04F 037F       MOV              EINER, #0x7F
+  306 0000017E         nicht_sieben
+  307 0000017E         
+  308 0000017E 2B7D            CMP              EINER, #0x7D ; 6 ? wenn ja -> 7
+                                                            
+  309 00000180 D101            BNE              nicht_sechs
+  310 00000182 F04F 0327       MOV              EINER, #0x27
+  311 00000186         nicht_sechs
+  312 00000186         
+  313 00000186 2B6D            CMP              EINER, #0x6D ; 5 ? wenn ja -> 6
 
 
 
 ARM Macro Assembler    Page 44 
 
 
-  320 00000188 4770            bx               lr
-  321 0000018A                 ENDP
-  322 0000018A         
-  323 0000018A         ; External Interrupt Handler for EXTI0 (Button connected
-                        to PC[0])
-  324 0000018A         EXTI0_IRQHandler
-                               PROC
-  325 0000018A B530            push             {R4, R5, LR}
-  326 0000018C         
-  327 0000018C         ; 10 ms warten (Tasterprellen)
-  328 0000018C F04F 000A       mov              R0, #10     ; nested UP-Aufruf
-  329 00000190 F7FF FFFE       bl               up_delay    ; -> LR sichern
-  330 00000194         
-  331 00000194         ; Zustand des Lauflichtes ändern
-  332 00000194         ; 0(default): aus / 1 an
-  333 00000194 F08A 0A01       eor              R10, #1     ; toggelt Bit 0
-  334 00000198         
-  335 00000198         ; Interrupt Flag zurücksetzen
-  336 00000198 4C2D            ldr              R4, =EXTI_PR1
-  337 0000019A F04F 0501       mov              R5, #1      ; clear by writing 
-                                                            1
-  338 0000019E 6025            str              R5, [R4]
-  339 000001A0         
-  340 000001A0         ; Zähler erhöhen
-  341 000001A0 F7FF FF8E       BL               zaehler
-  342 000001A4         
-  343 000001A4 E8BD 4030       pop              {R4, R5, LR}
-  344 000001A8 4770            bx               lr
-  345 000001AA                 ENDP
-  346 000001AA         
-  347 000001AA         
-  348 000001AA         ; External Interrupt Handler for EXTI1 (Button connected
-                        to PC[1])
-  349 000001AA         EXTI1_IRQHandler
-                               PROC
-  350 000001AA B530            push             {R4, R5, LR}
-  351 000001AC         
-  352 000001AC         ; 10 ms warten (Tasterprellen)
-  353 000001AC F04F 000A       mov              R0, #10     ; nested UP-Aufruf
-  354 000001B0 F7FF FFFE       bl               up_delay
-  355 000001B4         
-  356 000001B4         ; Zustand des Lauflichtes ändern
-  357 000001B4         ; 0(default): aus / 1 an
-  358 000001B4 4C27            ldr              R4, =GPIOC_IDR
-  359 000001B6 6825            ldr              R5, [R4]
-  360 000001B8 F015 0F02       tst              R5, #0x00000002 ; Test Zustand 
-                                                            des PC[1]
-  361 000001BC D004            beq              EXTI1_no_stop ; Wenn Button 0 n
-                                                            icht gedrückt wurde
-                                                             -> Zustandswechsel
                                                             
-  362 000001BE         
-  363 000001BE         ; Stop-Funktionalität: Wenn Button 0 gedrückt wurde -> T
-                       imer stop
-  364 000001BE 481E            ldr              R0, =TIM6_CR1
-  365 000001C0 6801            ldr              R1, [R0]
-  366 000001C2 F021 0101       bic              R1, R1, #1  ; Clear Bit 0, um d
-                                                            en Timer zu stoppen
+  314 00000188 D101            BNE              nicht_fuenf
+  315 0000018A F04F 037D       MOV              EINER, #0x7D
+  316 0000018E         nicht_fuenf
+  317 0000018E         
+  318 0000018E 2B66            CMP              EINER, #0x66 ; 4 ? wenn ja -> 5
                                                             
+  319 00000190 D101            BNE              nicht_vier
+  320 00000192 F04F 036D       MOV              EINER, #0x6D
+  321 00000196         nicht_vier
+  322 00000196         
+  323 00000196 2B4F            CMP              EINER, #0x4F ; 3 ? wenn ja -> 4
+                                                            
+  324 00000198 D101            BNE              nicht_drei
+  325 0000019A F04F 0366       MOV              EINER, #0x66
+  326 0000019E         nicht_drei
+  327 0000019E         
+  328 0000019E 2B5B            CMP              EINER, #0x5B ; 2 ? wenn ja -> 3
+                                                            
+  329 000001A0 D101            BNE              nicht_zwei
+  330 000001A2 F04F 034F       MOV              EINER, #0x4F
+  331 000001A6         nicht_zwei
+  332 000001A6         
+  333 000001A6 2B06            CMP              EINER, #0x06 ; 1 ? wenn ja -> 2
+                                                            
+  334 000001A8 D101            BNE              nicht_eins
+  335 000001AA F04F 035B       MOV              EINER, #0x5B
+  336 000001AE         nicht_eins
+  337 000001AE         
+  338 000001AE 2B3F            CMP              EINER, #0x3F ; 0 ? wenn ja -> 9
+                                                            
+  339 000001B0 D102            BNE              nicht_null
+  340 000001B2 F04F 0306       MOV              EINER, #0x06
+  341 000001B6 6003            STR              EINER, [R0]
+  342 000001B8         nicht_null
+  343 000001B8         
+  344 000001B8 4839            LDR              R0, =GPIOA_ODR
+  345 000001BA 6003            STR              EINER, [R0]
+  346 000001BC         
+  347 000001BC         ; 2ms warten 
+  348 000001BC F04F 0802       MOV              R8, #2
+  349 000001C0 F7FF FFFE       BL               up_delay
+  350 000001C4         
+  351 000001C4 4836            LDR              R0, =GPIOA_ODR
+  352 000001C6 6002            STR              ZEHNER, [R0]
+  353 000001C8         
+  354 000001C8         ; 2ms warten 
+  355 000001C8 F04F 0802       MOV              R8, #2
+  356 000001CC F7FF FFFE       BL               up_delay
+  357 000001D0         
+  358 000001D0 7801            ldrb             R1, [R0]
+  359 000001D2 F101 0101       add              R1, #1
+  360 000001D6 6001            str              R1, [R0]
+  361 000001D8         
+  362 000001D8 4770            bx               LR
+  363 000001DA         
+  364 000001DA                 ENDP
+  365 000001DA         
+  366 000001DA         ; External Interrupt Handler for EXTI0 (Button connected
 
 
 
 ARM Macro Assembler    Page 45 
 
 
-  367 000001C6 6001            str              R1, [R0]
-  368 000001C8         
-  369 000001C8         EXTI1_no_stop
-  370 000001C8         ; Interrupt Flag zurücksetzen
-  371 000001C8 4C21            ldr              R4, =EXTI_PR1
-  372 000001CA F04F 0502       mov              R5, #2      ; clear by writing 
-                                                            1
-  373 000001CE 6025            str              R5, [R4]
-  374 000001D0         
-  375 000001D0         ; Zähler erhöhen
-  376 000001D0 F7FF FF76       BL               zaehler
-  377 000001D4         
-  378 000001D4 E8BD 4030       pop              {R4, R5, LR}
-  379 000001D8 4770            bx               lr
-  380 000001DA                 ENDP
-  381 000001DA         
-  382 000001DA         ; External Interrupt Handler for EXTI2 (Button connected
-                        to PC[2])
-  383 000001DA         EXTI2_IRQHandler
+                        to PC[0])
+  367 000001DA         EXTI0_IRQHandler
                                PROC
-  384 000001DA B530            push             {R4, R5, LR}
-  385 000001DC         
-  386 000001DC         ; 10 ms warten (Tasterprellen)
-  387 000001DC F04F 000A       mov              R0, #10     ; nested UP-Aufruf
-  388 000001E0 F7FF FFFE       bl               up_delay
-  389 000001E4         
-  390 000001E4         ; Zustand des Lauflichtes ändern
-  391 000001E4         ; 0(default): aus / 1 an
-  392 000001E4 4C1B            ldr              R4, =GPIOC_IDR
-  393 000001E6 6825            ldr              R5, [R4]
-  394 000001E8 F015 0F04       tst              R5, #0x00000004 ; Test Zustand 
-                                                            des PC[2]
-  395 000001EC D003            beq              EXTI2_no_reset ; Wenn Button 1 
-                                                            nicht gedrückt wurd
-                                                            e -> Zustandswechse
-                                                            l 
-  396 000001EE         
-  397 000001EE         ; Reset-Funktionalität: Wenn Button 1 gedrückt wurde -> 
-                       Zähler zurücksetzen
-  398 000001EE F04F 033F       MOV              EINER, #0x3F
-  399 000001F2 F04F 02BF       MOV              ZEHNER, #0xBF
-  400 000001F6         
-  401 000001F6         EXTI2_no_reset
-  402 000001F6         ; Interrupt Flag zurücksetzen
-  403 000001F6 4C16            ldr              R4, =EXTI_PR1
-  404 000001F8 F04F 0504       mov              R5, #4      ; clear by writing 
+  368 000001DA B530            push             {R4, R5, LR}
+  369 000001DC         
+  370 000001DC         ; 10 ms warten (Tasterprellen)
+  371 000001DC F04F 000A       mov              R0, #10     ; nested UP-Aufruf
+  372 000001E0 F7FF FFFE       bl               up_delay    ; -> LR sichern
+  373 000001E4         
+  374 000001E4         ; Zustand des Lauflichtes ändern
+  375 000001E4         ; 0(default): aus / 1 an
+  376 000001E4 F08A 0A01       eor              R10, #1     ; toggelt Bit 0
+  377 000001E8         
+  378 000001E8         ; Interrupt Flag zurücksetzen
+  379 000001E8 4C30            ldr              R4, =EXTI_PR1
+  380 000001EA F04F 0501       mov              R5, #1      ; clear by writing 
                                                             1
-  405 000001FC 6025            str              R5, [R4]
-  406 000001FE         
-  407 000001FE         ; Zähler erhöhen
-  408 000001FE F7FF FF5F       BL               zaehler
-  409 00000202         
-  410 00000202 E8BD 4030       pop              {R4, R5, LR}
-  411 00000206 4770            bx               lr
-  412 00000208                 ENDP
-  413 00000208         
-  414 00000208                 END
-              4002104C 
-              FFFF0000 
+  381 000001EE 6025            str              R5, [R4]
+  382 000001F0         
+  383 000001F0         ; Zähler erhöhen
+  384 000001F0         ;BL zaehler
+  385 000001F0         
+  386 000001F0 E8BD 4030       pop              {R4, R5, LR}
+  387 000001F4 4770            bx               lr
+  388 000001F6                 ENDP
+  389 000001F6         
+  390 000001F6         
+  391 000001F6         ; External Interrupt Handler for EXTI1 (Button connected
+                        to PC[1])
+  392 000001F6         EXTI1_IRQHandler
+                               PROC
+  393 000001F6 B530            push             {R4, R5, LR}
+  394 000001F8         
+  395 000001F8         ; 10 ms warten (Tasterprellen)
+  396 000001F8 F04F 000A       mov              R0, #10     ; nested UP-Aufruf
+  397 000001FC F7FF FFFE       bl               up_delay
+  398 00000200         
+  399 00000200         ; Zustand des Lauflichtes ändern
+  400 00000200         ; 0(default): aus / 1 an
+  401 00000200 4C2B            ldr              R4, =GPIOC_IDR
+  402 00000202 6825            ldr              R5, [R4]
+  403 00000204 F015 0F02       tst              R5, #0x00000002 ; Test Zustand 
+                                                            des PC[1]
+  404 00000208 D004            beq              EXTI1_no_stop ; Wenn Button 0 n
+                                                            icht gedrückt wurde
+                                                             -> Zustandswechsel
+                                                            
+  405 0000020A         
+  406 0000020A         ; Stop-Funktionalität: Wenn Button 0 gedrückt wurde -> T
+                       imer stop
+  407 0000020A 481E            ldr              R0, =TIM6_CR1
+  408 0000020C 6801            ldr              R1, [R0]
+  409 0000020E F021 0101       bic              R1, R1, #1  ; Clear Bit 0, um d
+                                                            en Timer zu stoppen
+                                                            
+  410 00000212 6001            str              R1, [R0]
+  411 00000214         
+  412 00000214         EXTI1_no_stop
+  413 00000214         ; Interrupt Flag zurücksetzen
 
 
 
 ARM Macro Assembler    Page 46 
 
 
+  414 00000214 4C25            ldr              R4, =EXTI_PR1
+  415 00000216 F04F 0502       mov              R5, #2      ; clear by writing 
+                                                            1
+  416 0000021A 6025            str              R5, [R4]
+  417 0000021C         
+  418 0000021C E8BD 4030       pop              {R4, R5, LR}
+  419 00000220 4770            bx               lr
+  420 00000222                 ENDP
+  421 00000222         
+  422 00000222         ; External Interrupt Handler for EXTI2 (Button connected
+                        to PC[2])
+  423 00000222         EXTI2_IRQHandler
+                               PROC
+  424 00000222 B530            push             {R4, R5, LR}
+  425 00000224         
+  426 00000224         ; 10 ms warten (Tasterprellen)
+  427 00000224 F04F 000A       mov              R0, #10     ; nested UP-Aufruf
+  428 00000228 F7FF FFFE       bl               up_delay
+  429 0000022C         
+  430 0000022C         ; Zustand des Lauflichtes ändern
+  431 0000022C         ; 0(default): aus / 1 an
+  432 0000022C 4C20            ldr              R4, =GPIOC_IDR
+  433 0000022E 6825            ldr              R5, [R4]
+  434 00000230 F015 0F04       tst              R5, #0x00000004 ; Test Zustand 
+                                                            des PC[2]
+  435 00000234 D003            beq              EXTI2_no_reset ; Wenn Button 1 
+                                                            nicht gedrückt wurd
+                                                            e -> Zustandswechse
+                                                            l 
+  436 00000236         
+  437 00000236         ; Reset-Funktionalität: Wenn Button 1 gedrückt wurde -> 
+                       Zähler zurücksetzen
+  438 00000236 F04F 033F       MOV              EINER, #0x3F
+  439 0000023A F04F 02BF       MOV              ZEHNER, #0xBF
+  440 0000023E         
+  441 0000023E         EXTI2_no_reset
+  442 0000023E         ; Interrupt Flag zurücksetzen
+  443 0000023E 4C1B            ldr              R4, =EXTI_PR1
+  444 00000240 F04F 0504       mov              R5, #4      ; clear by writing 
+                                                            1
+  445 00000244 6025            str              R5, [R4]
+  446 00000246         
+  447 00000246 E8BD 4030       pop              {R4, R5, LR}
+  448 0000024A 4770            bx               lr
+  449 0000024C                 ENDP
+  450 0000024C         
+  451 0000024C                 END
+              4002104C 
+              FFFF0000 
               48000800 
               40021060 
               40010008 
@@ -2938,94 +2987,137 @@ ARM Macro Assembler    Page 46
               40010400 
               40021058 
               40001028 
+              40001428 
+
+
+
+ARM Macro Assembler    Page 47 
+
+
               4000102C 
+              4000142C 
               40001000 
+              40001400 
               E000E284 
               E000E104 
               4000100C 
-              48000014 
+              4000140C 
               40001010 
+              48000014 
+              40001410 
+              00000000 
               40010414 
               48000810 
-Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4.fp.sp 
---depend=.\objects\main.d -o.\objects\main.o -ID:\Keil\Pack\Keil\STM32G4xx_DFP\
-1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include --predefine="__UVISION_VERSION 
-SETA 538" --predefine="STM32G474xx SETA 1" --list=.\listings\main.lst main.s
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp.sp --depen
+d=.\objects\main.d -o.\objects\main.o -IC:\Keil_v5\ARM\PACK\Keil\STM32G4xx_DFP\
+1.4.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include -IC:\Keil_v5\ARM\CMSIS\Include 
+--predefine="__UVISION_VERSION SETA 536" --predefine="STM32G474xx SETA 1" --lis
+t=.\listings\main.lst main.s
 
 
 
 ARM Macro Assembler    Page 1 Alphabetic symbol ordering
 Relocatable symbols
 
-EXTI0_IRQHandler 0000018A
+COUNTER 00000000
+
+Symbol: COUNTER
+   Definitions
+      At line 58 in file main.s
+   Uses
+      At line 285 in file main.s
+Comment: COUNTER used once
+daten 00000000
+
+Symbol: daten
+   Definitions
+      At line 57 in file main.s
+   Uses
+      None
+Comment: daten unused
+2 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+EXTI0_IRQHandler 000001DA
 
 Symbol: EXTI0_IRQHandler
    Definitions
-      At line 324 in file main.s
+      At line 367 in file main.s
    Uses
       At line 42 in file main.s
 Comment: EXTI0_IRQHandler used once
-EXTI1_IRQHandler 000001AA
+EXTI1_IRQHandler 000001F6
 
 Symbol: EXTI1_IRQHandler
    Definitions
-      At line 349 in file main.s
+      At line 392 in file main.s
    Uses
       At line 43 in file main.s
 Comment: EXTI1_IRQHandler used once
-EXTI1_no_stop 000001C8
+EXTI1_no_stop 00000214
 
 Symbol: EXTI1_no_stop
    Definitions
-      At line 369 in file main.s
+      At line 412 in file main.s
    Uses
-      At line 361 in file main.s
+      At line 404 in file main.s
 Comment: EXTI1_no_stop used once
-EXTI2_IRQHandler 000001DA
+EXTI2_IRQHandler 00000222
 
 Symbol: EXTI2_IRQHandler
    Definitions
-      At line 383 in file main.s
+      At line 423 in file main.s
    Uses
       At line 44 in file main.s
 Comment: EXTI2_IRQHandler used once
-EXTI2_no_reset 000001F6
+EXTI2_no_reset 0000023E
 
 Symbol: EXTI2_no_reset
    Definitions
-      At line 401 in file main.s
+      At line 441 in file main.s
    Uses
-      At line 395 in file main.s
+      At line 435 in file main.s
 Comment: EXTI2_no_reset used once
-TIM6_IRQHandler 00000174
+TIM6_IRQHandler 000000F0
 
 Symbol: TIM6_IRQHandler
    Definitions
-      At line 305 in file main.s
+      At line 208 in file main.s
    Uses
       At line 45 in file main.s
 Comment: TIM6_IRQHandler used once
-loop 000000BE
+TIM7_IRQHandler 00000156
+
+Symbol: TIM7_IRQHandler
+   Definitions
+      At line 279 in file main.s
+   Uses
+      At line 46 in file main.s
+Comment: TIM7_IRQHandler used once
+loop 000000EE
 
 Symbol: loop
-   Definitions
-      At line 174 in file main.s
-   Uses
-      At line 171 in file main.s
-      At line 176 in file main.s
-      At line 300 in file main.s
-
-main 00000000
 
 
 
 ARM Macro Assembler    Page 2 Alphabetic symbol ordering
 Relocatable symbols
 
+   Definitions
+      At line 201 in file main.s
+   Uses
+      At line 198 in file main.s
+      At line 203 in file main.s
+
+main 00000000
 
 Symbol: main
    Definitions
-      At line 64 in file main.s
+      At line 66 in file main.s
    Uses
       At line 41 in file main.s
 Comment: main used once
@@ -3033,211 +3125,207 @@ main_s 00000000
 
 Symbol: main_s
    Definitions
-      At line 59 in file main.s
+      At line 61 in file main.s
    Uses
       None
 Comment: main_s unused
-nicht_acht 000000D6
+nicht_acht 00000176
 
 Symbol: nicht_acht
    Definitions
-      At line 193 in file main.s
+      At line 301 in file main.s
    Uses
-      At line 191 in file main.s
+      At line 299 in file main.s
 Comment: nicht_acht used once
-nicht_drei 000000FE
+nicht_drei 0000019E
 
 Symbol: nicht_drei
    Definitions
-      At line 218 in file main.s
+      At line 326 in file main.s
    Uses
-      At line 216 in file main.s
+      At line 324 in file main.s
 Comment: nicht_drei used once
-nicht_eins 0000010E
+nicht_eins 000001AE
 
 Symbol: nicht_eins
    Definitions
-      At line 228 in file main.s
+      At line 336 in file main.s
    Uses
-      At line 226 in file main.s
+      At line 334 in file main.s
 Comment: nicht_eins used once
-nicht_fuenf 000000EE
+nicht_fuenf 0000018E
 
 Symbol: nicht_fuenf
    Definitions
-      At line 208 in file main.s
+      At line 316 in file main.s
    Uses
-      At line 206 in file main.s
+      At line 314 in file main.s
 Comment: nicht_fuenf used once
-nicht_neun 000000CE
+nicht_neun 0000016E
 
 Symbol: nicht_neun
    Definitions
-      At line 188 in file main.s
-   Uses
-      At line 185 in file main.s
-Comment: nicht_neun used once
-nicht_null 0000011A
-
-Symbol: nicht_null
-   Definitions
+      At line 296 in file main.s
 
 
 
 ARM Macro Assembler    Page 3 Alphabetic symbol ordering
 Relocatable symbols
 
-      At line 237 in file main.s
    Uses
-      At line 187 in file main.s
-      At line 231 in file main.s
+      At line 293 in file main.s
+Comment: nicht_neun used once
+nicht_null 000001B8
 
-nicht_sechs 000000E6
+Symbol: nicht_null
+   Definitions
+      At line 342 in file main.s
+   Uses
+      At line 295 in file main.s
+      At line 339 in file main.s
+
+nicht_sechs 00000186
 
 Symbol: nicht_sechs
    Definitions
-      At line 203 in file main.s
+      At line 311 in file main.s
    Uses
-      At line 201 in file main.s
+      At line 309 in file main.s
 Comment: nicht_sechs used once
-nicht_sieben 000000DE
+nicht_sieben 0000017E
 
 Symbol: nicht_sieben
    Definitions
-      At line 198 in file main.s
+      At line 306 in file main.s
    Uses
-      At line 196 in file main.s
+      At line 304 in file main.s
 Comment: nicht_sieben used once
-nicht_vier 000000F6
+nicht_vier 00000196
 
 Symbol: nicht_vier
    Definitions
-      At line 213 in file main.s
+      At line 321 in file main.s
    Uses
-      At line 211 in file main.s
+      At line 319 in file main.s
 Comment: nicht_vier used once
-nicht_zwei 00000106
+nicht_zwei 000001A6
 
 Symbol: nicht_zwei
    Definitions
-      At line 223 in file main.s
+      At line 331 in file main.s
    Uses
-      At line 221 in file main.s
+      At line 329 in file main.s
 Comment: nicht_zwei used once
-z_nicht_acht 00000130
+z_nicht_acht 0000010A
 
 Symbol: z_nicht_acht
    Definitions
-      At line 255 in file main.s
+      At line 226 in file main.s
    Uses
-      At line 253 in file main.s
+      At line 224 in file main.s
 Comment: z_nicht_acht used once
-z_nicht_drei 00000158
+z_nicht_drei 00000132
 
 Symbol: z_nicht_drei
    Definitions
-      At line 280 in file main.s
+      At line 251 in file main.s
    Uses
-      At line 278 in file main.s
-Comment: z_nicht_drei used once
-z_nicht_eins 00000168
-
-Symbol: z_nicht_eins
-   Definitions
-      At line 290 in file main.s
-   Uses
+      At line 249 in file main.s
 
 
 
 ARM Macro Assembler    Page 4 Alphabetic symbol ordering
 Relocatable symbols
 
-      At line 288 in file main.s
+Comment: z_nicht_drei used once
+z_nicht_eins 00000142
+
+Symbol: z_nicht_eins
+   Definitions
+      At line 261 in file main.s
+   Uses
+      At line 259 in file main.s
 Comment: z_nicht_eins used once
-z_nicht_fuenf 00000148
+z_nicht_fuenf 00000122
 
 Symbol: z_nicht_fuenf
    Definitions
-      At line 270 in file main.s
+      At line 241 in file main.s
    Uses
-      At line 268 in file main.s
+      At line 239 in file main.s
 Comment: z_nicht_fuenf used once
-z_nicht_neun 00000128
+z_nicht_neun 00000102
 
 Symbol: z_nicht_neun
    Definitions
-      At line 250 in file main.s
+      At line 221 in file main.s
    Uses
-      At line 247 in file main.s
+      At line 218 in file main.s
 Comment: z_nicht_neun used once
-z_nicht_null 00000170
+z_nicht_null 0000014A
 
 Symbol: z_nicht_null
    Definitions
-      At line 296 in file main.s
+      At line 267 in file main.s
    Uses
-      At line 241 in file main.s
-      At line 249 in file main.s
-      At line 293 in file main.s
+      At line 220 in file main.s
+      At line 264 in file main.s
 
-z_nicht_sechs 00000140
+z_nicht_sechs 0000011A
 
 Symbol: z_nicht_sechs
    Definitions
-      At line 265 in file main.s
+      At line 236 in file main.s
    Uses
-      At line 263 in file main.s
+      At line 234 in file main.s
 Comment: z_nicht_sechs used once
-z_nicht_sieben 00000138
+z_nicht_sieben 00000112
 
 Symbol: z_nicht_sieben
    Definitions
-      At line 260 in file main.s
+      At line 231 in file main.s
    Uses
-      At line 258 in file main.s
+      At line 229 in file main.s
 Comment: z_nicht_sieben used once
-z_nicht_vier 00000150
+z_nicht_vier 0000012A
 
 Symbol: z_nicht_vier
    Definitions
-      At line 275 in file main.s
+      At line 246 in file main.s
    Uses
-      At line 273 in file main.s
+      At line 244 in file main.s
 Comment: z_nicht_vier used once
-z_nicht_zwei 00000160
-
-Symbol: z_nicht_zwei
-   Definitions
-      At line 285 in file main.s
-   Uses
-      At line 283 in file main.s
+z_nicht_zwei 0000013A
 
 
 
 ARM Macro Assembler    Page 5 Alphabetic symbol ordering
 Relocatable symbols
 
+
+Symbol: z_nicht_zwei
+   Definitions
+      At line 256 in file main.s
+   Uses
+      At line 254 in file main.s
 Comment: z_nicht_zwei used once
-zaehler 000000C0
+zaehler 00000160
 
 Symbol: zaehler
    Definitions
-      At line 180 in file main.s
+      At line 288 in file main.s
    Uses
-      At line 313 in file main.s
-      At line 341 in file main.s
-      At line 376 in file main.s
-      At line 408 in file main.s
-
-zeta 0000011E
+      None
+Comment: zaehler unused
+zeta 000000F8
 
 Symbol: zeta
    Definitions
-      At line 244 in file main.s
+      At line 215 in file main.s
    Uses
-      At line 235 in file main.s
-Comment: zeta used once
-31 symbols
+      None
+Comment: zeta unused
+32 symbols
 
 
 
@@ -4044,7 +4132,7 @@ Symbol: EXTI_FTSR1
    Definitions
       At line 454 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 109 in file main.s
+      At line 111 in file main.s
 Comment: EXTI_FTSR1 used once
 EXTI_FTSR2 4001042C
 
@@ -4060,7 +4148,7 @@ Symbol: EXTI_IMR1
    Definitions
       At line 451 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 129 in file main.s
+      At line 131 in file main.s
 Comment: EXTI_IMR1 used once
 EXTI_IMR2 40010420
 
@@ -4076,9 +4164,9 @@ Symbol: EXTI_PR1
    Definitions
       At line 456 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 336 in file main.s
-      At line 371 in file main.s
-      At line 403 in file main.s
+      At line 379 in file main.s
+      At line 414 in file main.s
+      At line 443 in file main.s
 
 EXTI_PR2 40010434
 
@@ -4507,7 +4595,7 @@ Symbol: GPIOA_MODER
    Definitions
       At line 328 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 71 in file main.s
+      At line 73 in file main.s
 Comment: GPIOA_MODER used once
 GPIOA_ODR 48000014
 
@@ -4515,8 +4603,10 @@ Symbol: GPIOA_ODR
    Definitions
       At line 333 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 181 in file main.s
-      At line 316 in file main.s
+      At line 272 in file main.s
+      At line 289 in file main.s
+      At line 344 in file main.s
+      At line 351 in file main.s
 
 GPIOA_OSPEEDR 48000008
 
@@ -4536,14 +4626,14 @@ Symbol: GPIOA_OTYPER
 Comment: GPIOA_OTYPER unused
 GPIOA_PUPDR 4800000C
 
-Symbol: GPIOA_PUPDR
-   Definitions
 
 
 
 ARM Macro Assembler    Page 21 Alphabetic symbol ordering
 Absolute symbols
 
+Symbol: GPIOA_PUPDR
+   Definitions
       At line 331 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -4601,14 +4691,14 @@ Comment: GPIOB_BSRR unused
 GPIOB_IDR 48000410
 
 Symbol: GPIOB_IDR
-   Definitions
-      At line 347 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 22 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 347 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: GPIOB_IDR unused
@@ -4666,14 +4756,14 @@ Symbol: GPIOC_AFR0
    Definitions
       At line 367 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: GPIOC_AFR0 unused
 
 
 
 ARM Macro Assembler    Page 23 Alphabetic symbol ordering
 Absolute symbols
 
+      None
+Comment: GPIOC_AFR0 unused
 GPIOC_AFR1 48000824
 
 Symbol: GPIOC_AFR1
@@ -4722,8 +4812,8 @@ Symbol: GPIOC_IDR
    Definitions
       At line 363 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 358 in file main.s
-      At line 392 in file main.s
+      At line 401 in file main.s
+      At line 432 in file main.s
 
 GPIOC_LCKR 4800081C
 
@@ -4731,21 +4821,21 @@ Symbol: GPIOC_LCKR
    Definitions
       At line 366 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: GPIOC_LCKR unused
 
 
 
 ARM Macro Assembler    Page 24 Alphabetic symbol ordering
 Absolute symbols
 
+      None
+Comment: GPIOC_LCKR unused
 GPIOC_MODER 48000800
 
 Symbol: GPIOC_MODER
    Definitions
       At line 359 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 82 in file main.s
+      At line 84 in file main.s
 Comment: GPIOC_MODER used once
 GPIOC_ODR 48000814
 
@@ -4797,13 +4887,13 @@ Symbol: GPIOD_AFR1
 Comment: GPIOD_AFR1 unused
 GPIOD_BASE 48000C00
 
-Symbol: GPIOD_BASE
-
 
 
 ARM Macro Assembler    Page 25 Alphabetic symbol ordering
 Absolute symbols
 
+
+Symbol: GPIOD_BASE
    Definitions
       At line 173 in file STM32G4xx_REG_ASM.inc
    Uses
@@ -4861,14 +4951,14 @@ Symbol: GPIOD_MODER
 Comment: GPIOD_MODER unused
 GPIOD_ODR 48000C14
 
-Symbol: GPIOD_ODR
-   Definitions
 
 
 
 ARM Macro Assembler    Page 26 Alphabetic symbol ordering
 Absolute symbols
 
+Symbol: GPIOD_ODR
+   Definitions
       At line 379 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -4926,14 +5016,14 @@ Symbol: GPIOE_BASE
       At line 394 in file STM32G4xx_REG_ASM.inc
       At line 395 in file STM32G4xx_REG_ASM.inc
       At line 396 in file STM32G4xx_REG_ASM.inc
-      At line 397 in file STM32G4xx_REG_ASM.inc
-      At line 398 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 27 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 397 in file STM32G4xx_REG_ASM.inc
+      At line 398 in file STM32G4xx_REG_ASM.inc
       At line 399 in file STM32G4xx_REG_ASM.inc
       At line 400 in file STM32G4xx_REG_ASM.inc
 
@@ -4991,14 +5081,14 @@ Symbol: GPIOE_OSPEEDR
    Definitions
       At line 392 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: GPIOE_OSPEEDR unused
 
 
 
 ARM Macro Assembler    Page 28 Alphabetic symbol ordering
 Absolute symbols
 
+      None
+Comment: GPIOE_OSPEEDR unused
 GPIOE_OTYPER 48001004
 
 Symbol: GPIOE_OTYPER
@@ -5056,14 +5146,14 @@ Symbol: GPIOF_BRR
       At line 416 in file STM32G4xx_REG_ASM.inc
    Uses
       None
-Comment: GPIOF_BRR unused
-GPIOF_BSRR 48001418
 
 
 
 ARM Macro Assembler    Page 29 Alphabetic symbol ordering
 Absolute symbols
 
+Comment: GPIOF_BRR unused
+GPIOF_BSRR 48001418
 
 Symbol: GPIOF_BSRR
    Definitions
@@ -5121,14 +5211,14 @@ Symbol: GPIOF_OTYPER
 Comment: GPIOF_OTYPER unused
 GPIOF_PUPDR 4800140C
 
-Symbol: GPIOF_PUPDR
-   Definitions
 
 
 
 ARM Macro Assembler    Page 30 Alphabetic symbol ordering
 Absolute symbols
 
+Symbol: GPIOF_PUPDR
+   Definitions
       At line 409 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -5186,14 +5276,14 @@ Comment: GPIOG_BSRR unused
 GPIOG_IDR 48001810
 
 Symbol: GPIOG_IDR
-   Definitions
-      At line 425 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 31 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 425 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: GPIOG_IDR unused
@@ -5251,14 +5341,14 @@ Symbol: HRTIM1_BASE
    Definitions
       At line 108 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 109 in file STM32G4xx_REG_ASM.inc
-      At line 110 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 32 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 109 in file STM32G4xx_REG_ASM.inc
+      At line 110 in file STM32G4xx_REG_ASM.inc
       At line 111 in file STM32G4xx_REG_ASM.inc
       At line 112 in file STM32G4xx_REG_ASM.inc
       At line 113 in file STM32G4xx_REG_ASM.inc
@@ -5316,14 +5406,14 @@ Comment: HRTIM1_TIME_BASE unused
 HRTIM1_TIMF_BASE 40016B00
 
 Symbol: HRTIM1_TIMF_BASE
-   Definitions
-      At line 114 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 33 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 114 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: HRTIM1_TIMF_BASE unused
@@ -5381,14 +5471,14 @@ Symbol: LPUART1_BASE
    Definitions
       At line 72 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: LPUART1_BASE unused
 
 
 
 ARM Macro Assembler    Page 34 Alphabetic symbol ordering
 Absolute symbols
 
+      None
+Comment: LPUART1_BASE unused
 NVIC_BASE E000E100
 
 Symbol: NVIC_BASE
@@ -5447,13 +5537,13 @@ Symbol: NVIC_IABR0
 Comment: NVIC_IABR0 unused
 NVIC_IABR1 E000E304
 
-Symbol: NVIC_IABR1
-
 
 
 ARM Macro Assembler    Page 35 Alphabetic symbol ordering
 Absolute symbols
 
+
+Symbol: NVIC_IABR1
    Definitions
       At line 646 in file STM32G4xx_REG_ASM.inc
    Uses
@@ -5511,14 +5601,14 @@ NVIC_ICER0 E000E180
 
 Symbol: NVIC_ICER0
    Definitions
-      At line 617 in file STM32G4xx_REG_ASM.inc
-   Uses
 
 
 
 ARM Macro Assembler    Page 36 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 617 in file STM32G4xx_REG_ASM.inc
+   Uses
       None
 Comment: NVIC_ICER0 unused
 NVIC_ICER1 E000E184
@@ -5576,20 +5666,20 @@ Symbol: NVIC_ICER7
       At line 624 in file STM32G4xx_REG_ASM.inc
    Uses
       None
-Comment: NVIC_ICER7 unused
-NVIC_ICPR0 E000E280
 
 
 
 ARM Macro Assembler    Page 37 Alphabetic symbol ordering
 Absolute symbols
 
+Comment: NVIC_ICER7 unused
+NVIC_ICPR0 E000E280
 
 Symbol: NVIC_ICPR0
    Definitions
       At line 635 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 120 in file main.s
+      At line 122 in file main.s
 Comment: NVIC_ICPR0 used once
 NVIC_ICPR1 E000E284
 
@@ -5597,8 +5687,9 @@ Symbol: NVIC_ICPR1
    Definitions
       At line 636 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 155 in file main.s
-Comment: NVIC_ICPR1 used once
+      At line 169 in file main.s
+      At line 173 in file main.s
+
 NVIC_ICPR2 E000E288
 
 Symbol: NVIC_ICPR2
@@ -5641,14 +5732,14 @@ Symbol: NVIC_ICPR6
 Comment: NVIC_ICPR6 unused
 NVIC_ICPR7 E000E29C
 
-Symbol: NVIC_ICPR7
-   Definitions
-
 
 
 ARM Macro Assembler    Page 38 Alphabetic symbol ordering
 Absolute symbols
 
+
+Symbol: NVIC_ICPR7
+   Definitions
       At line 642 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -5667,7 +5758,7 @@ Symbol: NVIC_ISER0
    Definitions
       At line 607 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 124 in file main.s
+      At line 126 in file main.s
 Comment: NVIC_ISER0 used once
 NVIC_ISER1 E000E104
 
@@ -5675,8 +5766,9 @@ Symbol: NVIC_ISER1
    Definitions
       At line 608 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 158 in file main.s
-Comment: NVIC_ISER1 used once
+      At line 177 in file main.s
+      At line 181 in file main.s
+
 NVIC_ISER2 E000E108
 
 Symbol: NVIC_ISER2
@@ -5704,16 +5796,16 @@ Comment: NVIC_ISER4 unused
 NVIC_ISER5 E000E114
 
 Symbol: NVIC_ISER5
-   Definitions
-      At line 612 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
 
 
 
 ARM Macro Assembler    Page 39 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 612 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
 Comment: NVIC_ISER5 unused
 NVIC_ISER6 E000E118
 
@@ -5769,15 +5861,15 @@ Symbol: NVIC_ISPR4
    Definitions
       At line 630 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: NVIC_ISPR4 unused
-NVIC_ISPR5 E000E214
-
 
 
 
 ARM Macro Assembler    Page 40 Alphabetic symbol ordering
 Absolute symbols
+
+      None
+Comment: NVIC_ISPR4 unused
+NVIC_ISPR5 E000E214
 
 Symbol: NVIC_ISPR5
    Definitions
@@ -5835,15 +5927,15 @@ Symbol: OPAMP4_BASE
 Comment: OPAMP4_BASE unused
 OPAMP5_BASE 40010310
 
-Symbol: OPAMP5_BASE
-   Definitions
-      At line 92 in file STM32G4xx_REG_ASM.inc
-
 
 
 ARM Macro Assembler    Page 41 Alphabetic symbol ordering
 Absolute symbols
 
+
+Symbol: OPAMP5_BASE
+   Definitions
+      At line 92 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: OPAMP5_BASE unused
@@ -5900,15 +5992,15 @@ Symbol: PWR_BASE
 Comment: PWR_BASE unused
 QSPI_BASE 90000000
 
-Symbol: QSPI_BASE
-   Definitions
-      At line 10 in file STM32G4xx_REG_ASM.inc
-
 
 
 ARM Macro Assembler    Page 42 Alphabetic symbol ordering
 Absolute symbols
 
+
+Symbol: QSPI_BASE
+   Definitions
+      At line 10 in file STM32G4xx_REG_ASM.inc
    Uses
       None
 Comment: QSPI_BASE unused
@@ -5950,7 +6042,7 @@ Symbol: RCC_AHB2ENR
    Definitions
       At line 302 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 67 in file main.s
+      At line 69 in file main.s
 Comment: RCC_AHB2ENR used once
 RCC_AHB2RSTR 4002102C
 
@@ -5964,16 +6056,16 @@ RCC_AHB2SMENR 4002106C
 
 Symbol: RCC_AHB2SMENR
    Definitions
-      At line 308 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: RCC_AHB2SMENR unused
 
 
 
 ARM Macro Assembler    Page 43 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 308 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: RCC_AHB2SMENR unused
 RCC_AHB3ENR 40021050
 
 Symbol: RCC_AHB3ENR
@@ -6004,7 +6096,7 @@ Symbol: RCC_APB1ENR1
    Definitions
       At line 304 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 137 in file main.s
+      At line 139 in file main.s
 Comment: RCC_APB1ENR1 used once
 RCC_APB1ENR2 4002105C
 
@@ -6029,16 +6121,16 @@ Symbol: RCC_APB1RSTR2
       At line 299 in file STM32G4xx_REG_ASM.inc
    Uses
       None
-Comment: RCC_APB1RSTR2 unused
-RCC_APB1SMENR1 40021078
-
-Symbol: RCC_APB1SMENR1
 
 
 
 ARM Macro Assembler    Page 44 Alphabetic symbol ordering
 Absolute symbols
 
+Comment: RCC_APB1RSTR2 unused
+RCC_APB1SMENR1 40021078
+
+Symbol: RCC_APB1SMENR1
    Definitions
       At line 310 in file STM32G4xx_REG_ASM.inc
    Uses
@@ -6058,7 +6150,7 @@ Symbol: RCC_APB2ENR
    Definitions
       At line 306 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 92 in file main.s
+      At line 94 in file main.s
 Comment: RCC_APB2ENR used once
 RCC_APB2RSTR 40021040
 
@@ -6094,16 +6186,16 @@ Symbol: RCC_BASE
       At line 297 in file STM32G4xx_REG_ASM.inc
       At line 298 in file STM32G4xx_REG_ASM.inc
       At line 299 in file STM32G4xx_REG_ASM.inc
-      At line 300 in file STM32G4xx_REG_ASM.inc
-      At line 301 in file STM32G4xx_REG_ASM.inc
-      At line 302 in file STM32G4xx_REG_ASM.inc
-      At line 303 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 45 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 300 in file STM32G4xx_REG_ASM.inc
+      At line 301 in file STM32G4xx_REG_ASM.inc
+      At line 302 in file STM32G4xx_REG_ASM.inc
+      At line 303 in file STM32G4xx_REG_ASM.inc
       At line 304 in file STM32G4xx_REG_ASM.inc
       At line 305 in file STM32G4xx_REG_ASM.inc
       At line 306 in file STM32G4xx_REG_ASM.inc
@@ -6159,16 +6251,16 @@ Symbol: RCC_CICR
    Uses
       None
 Comment: RCC_CICR unused
-RCC_CIER 40021018
-
-Symbol: RCC_CIER
-   Definitions
 
 
 
 ARM Macro Assembler    Page 46 Alphabetic symbol ordering
 Absolute symbols
 
+RCC_CIER 40021018
+
+Symbol: RCC_CIER
+   Definitions
       At line 292 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -6224,16 +6316,16 @@ Comment: RCC_PLLCFGR unused
 RNG_BASE 50060800
 
 Symbol: RNG_BASE
-   Definitions
-      At line 196 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
 
 
 
 ARM Macro Assembler    Page 47 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 196 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
 Comment: RNG_BASE unused
 RTC_BASE 40002800
 
@@ -6289,16 +6381,16 @@ SPI2_BASE 40003800
 Symbol: SPI2_BASE
    Definitions
       At line 55 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: SPI2_BASE unused
-SPI3_BASE 40003C00
 
 
 
 ARM Macro Assembler    Page 48 Alphabetic symbol ordering
 Absolute symbols
 
+   Uses
+      None
+Comment: SPI2_BASE unused
+SPI3_BASE 40003C00
 
 Symbol: SPI3_BASE
    Definitions
@@ -6354,16 +6446,16 @@ Symbol: SRAM2_BB_BASE
    Uses
       None
 Comment: SRAM2_BB_BASE unused
-SRAM2_SIZE 00004000
-
-Symbol: SRAM2_SIZE
-   Definitions
 
 
 
 ARM Macro Assembler    Page 49 Alphabetic symbol ordering
 Absolute symbols
 
+SRAM2_SIZE 00004000
+
+Symbol: SRAM2_SIZE
+   Definitions
       At line 25 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -6419,16 +6511,16 @@ Symbol: SYSCFG_CFGR1
 Comment: SYSCFG_CFGR1 unused
 SYSCFG_CFGR2 4001001C
 
-Symbol: SYSCFG_CFGR2
-   Definitions
-      At line 444 in file STM32G4xx_REG_ASM.inc
-   Uses
 
 
 
 ARM Macro Assembler    Page 50 Alphabetic symbol ordering
 Absolute symbols
 
+Symbol: SYSCFG_CFGR2
+   Definitions
+      At line 444 in file STM32G4xx_REG_ASM.inc
+   Uses
       None
 Comment: SYSCFG_CFGR2 unused
 SYSCFG_EXTICR1 40010008
@@ -6437,7 +6529,7 @@ Symbol: SYSCFG_EXTICR1
    Definitions
       At line 439 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 98 in file main.s
+      At line 100 in file main.s
 Comment: SYSCFG_EXTICR1 used once
 SYSCFG_EXTICR2 4001000C
 
@@ -6484,16 +6576,16 @@ SYSCFG_SKR 40010024
 Symbol: SYSCFG_SKR
    Definitions
       At line 446 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: SYSCFG_SKR unused
-SYSCFG_SWPR 40010020
 
 
 
 ARM Macro Assembler    Page 51 Alphabetic symbol ordering
 Absolute symbols
 
+   Uses
+      None
+Comment: SYSCFG_SKR unused
+SYSCFG_SWPR 40010020
 
 Symbol: SYSCFG_SWPR
    Definitions
@@ -6549,16 +6641,16 @@ Symbol: TIM20_BASE
    Uses
       None
 Comment: TIM20_BASE unused
-TIM2_BASE 40000000
-
-Symbol: TIM2_BASE
-   Definitions
 
 
 
 ARM Macro Assembler    Page 52 Alphabetic symbol ordering
 Absolute symbols
 
+TIM2_BASE 40000000
+
+Symbol: TIM2_BASE
+   Definitions
       At line 44 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -6593,7 +6685,7 @@ Symbol: TIM6_ARR
    Definitions
       At line 542 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 146 in file main.s
+      At line 152 in file main.s
 Comment: TIM6_ARR used once
 TIM6_BASE 40001000
 
@@ -6614,24 +6706,24 @@ TIM6_CNT 40001024
 
 Symbol: TIM6_CNT
    Definitions
-      At line 540 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: TIM6_CNT unused
 
 
 
 ARM Macro Assembler    Page 53 Alphabetic symbol ordering
 Absolute symbols
 
+      At line 540 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
+Comment: TIM6_CNT unused
 TIM6_CR1 40001000
 
 Symbol: TIM6_CR1
    Definitions
       At line 535 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 150 in file main.s
-      At line 364 in file main.s
+      At line 160 in file main.s
+      At line 407 in file main.s
 
 TIM6_CR2 40001004
 
@@ -6647,7 +6739,7 @@ Symbol: TIM6_DIER
    Definitions
       At line 537 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 167 in file main.s
+      At line 190 in file main.s
 Comment: TIM6_DIER used once
 TIM6_EGR 40001014
 
@@ -6663,7 +6755,7 @@ Symbol: TIM6_PSC
    Definitions
       At line 541 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 142 in file main.s
+      At line 144 in file main.s
 Comment: TIM6_PSC used once
 TIM6_SR 40001010
 
@@ -6671,7 +6763,7 @@ Symbol: TIM6_SR
    Definitions
       At line 538 in file STM32G4xx_REG_ASM.inc
    Uses
-      At line 308 in file main.s
+      At line 211 in file main.s
 Comment: TIM6_SR used once
 TIM7_ARR 4000142C
 
@@ -6679,15 +6771,15 @@ Symbol: TIM7_ARR
    Definitions
       At line 553 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: TIM7_ARR unused
-TIM7_BASE 40001400
-
 
 
 
 ARM Macro Assembler    Page 54 Alphabetic symbol ordering
 Absolute symbols
+
+      At line 156 in file main.s
+Comment: TIM7_ARR used once
+TIM7_BASE 40001400
 
 Symbol: TIM7_BASE
    Definitions
@@ -6716,8 +6808,8 @@ Symbol: TIM7_CR1
    Definitions
       At line 546 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: TIM7_CR1 unused
+      At line 164 in file main.s
+Comment: TIM7_CR1 used once
 TIM7_CR2 40001404
 
 Symbol: TIM7_CR2
@@ -6732,8 +6824,8 @@ Symbol: TIM7_DIER
    Definitions
       At line 548 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: TIM7_DIER unused
+      At line 194 in file main.s
+Comment: TIM7_DIER used once
 TIM7_EGR 40001414
 
 Symbol: TIM7_EGR
@@ -6744,26 +6836,26 @@ Symbol: TIM7_EGR
 Comment: TIM7_EGR unused
 TIM7_PSC 40001428
 
-Symbol: TIM7_PSC
-   Definitions
-      At line 552 in file STM32G4xx_REG_ASM.inc
-   Uses
 
 
 
 ARM Macro Assembler    Page 55 Alphabetic symbol ordering
 Absolute symbols
 
-      None
-Comment: TIM7_PSC unused
+Symbol: TIM7_PSC
+   Definitions
+      At line 552 in file STM32G4xx_REG_ASM.inc
+   Uses
+      At line 148 in file main.s
+Comment: TIM7_PSC used once
 TIM7_SR 40001410
 
 Symbol: TIM7_SR
    Definitions
       At line 549 in file STM32G4xx_REG_ASM.inc
    Uses
-      None
-Comment: TIM7_SR unused
+      At line 281 in file main.s
+Comment: TIM7_SR used once
 TIM8_BASE 40013400
 
 Symbol: TIM8_BASE
@@ -6809,16 +6901,16 @@ USART1_BASE 40013800
 Symbol: USART1_BASE
    Definitions
       At line 99 in file STM32G4xx_REG_ASM.inc
-   Uses
-      At line 558 in file STM32G4xx_REG_ASM.inc
-      At line 559 in file STM32G4xx_REG_ASM.inc
-      At line 560 in file STM32G4xx_REG_ASM.inc
 
 
 
 ARM Macro Assembler    Page 56 Alphabetic symbol ordering
 Absolute symbols
 
+   Uses
+      At line 558 in file STM32G4xx_REG_ASM.inc
+      At line 559 in file STM32G4xx_REG_ASM.inc
+      At line 560 in file STM32G4xx_REG_ASM.inc
       At line 561 in file STM32G4xx_REG_ASM.inc
       At line 562 in file STM32G4xx_REG_ASM.inc
       At line 563 in file STM32G4xx_REG_ASM.inc
@@ -6874,16 +6966,16 @@ USART1_ICR 40013820
 Symbol: USART1_ICR
    Definitions
       At line 566 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
-Comment: USART1_ICR unused
-USART1_ISR 4001381C
 
 
 
 ARM Macro Assembler    Page 57 Alphabetic symbol ordering
 Absolute symbols
 
+   Uses
+      None
+Comment: USART1_ICR unused
+USART1_ISR 4001381C
 
 Symbol: USART1_ISR
    Definitions
@@ -6939,16 +7031,16 @@ Symbol: USART2_BASE
    Uses
       None
 Comment: USART2_BASE unused
-USART3_BASE 40004800
-
-Symbol: USART3_BASE
-   Definitions
 
 
 
 ARM Macro Assembler    Page 58 Alphabetic symbol ordering
 Absolute symbols
 
+USART3_BASE 40004800
+
+Symbol: USART3_BASE
+   Definitions
       At line 58 in file STM32G4xx_REG_ASM.inc
    Uses
       At line 573 in file STM32G4xx_REG_ASM.inc
@@ -7004,16 +7096,16 @@ Symbol: USART3_GTPR
    Uses
       None
 Comment: USART3_GTPR unused
-USART3_ICR 40004820
-
-Symbol: USART3_ICR
-   Definitions
 
 
 
 ARM Macro Assembler    Page 59 Alphabetic symbol ordering
 Absolute symbols
 
+USART3_ICR 40004820
+
+Symbol: USART3_ICR
+   Definitions
       At line 581 in file STM32G4xx_REG_ASM.inc
    Uses
       None
@@ -7069,16 +7161,16 @@ Comment: USART3_TDR unused
 USB_BASE 40005C00
 
 Symbol: USB_BASE
-   Definitions
-      At line 63 in file STM32G4xx_REG_ASM.inc
-   Uses
-      None
 
 
 
 ARM Macro Assembler    Page 60 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 63 in file STM32G4xx_REG_ASM.inc
+   Uses
+      None
 Comment: USB_BASE unused
 USB_PMAADDR 40006000
 
@@ -7115,11 +7207,13 @@ up_delay 00000000
 
 Symbol: up_delay
    Definitions
-      At line 48 in file main.s
+      At line 49 in file main.s
    Uses
-      At line 329 in file main.s
-      At line 354 in file main.s
-      At line 388 in file main.s
+      At line 349 in file main.s
+      At line 356 in file main.s
+      At line 372 in file main.s
+      At line 397 in file main.s
+      At line 428 in file main.s
 
 1 symbol
-765 symbols in table
+768 symbols in table
