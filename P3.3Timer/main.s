@@ -2,12 +2,12 @@
 ; ========================================================================================
 ; | Modulname:   main.s                                   | Prozessor:  STM32G474        |
 ; |--------------------------------------------------------------------------------------|
-; | Ersteller:   P. Raab                                  | Datum: 20.12.2023            |
+; | Ersteller:   Egor Bernhardt, Albert Brandt            | Datum: 26.12.2023            |
 ; |--------------------------------------------------------------------------------------|
 ; | Version:   4.0              | Projekt: Stoppuhr 	  | Assembler:  ARM-ASM          |
 ; |--------------------------------------------------------------------------------------|
 ; | Aufgabe:                                                                             |
-; |    Stoppuhr                 |
+; |    Stoppuhr   2.3              |
 ; |                                                                                      |
 ; |--------------------------------------------------------------------------------------|
 ; | Bemerkungen:                                                                         |
@@ -47,9 +47,9 @@ ZEHNER 		RN R2
 EINER 		RN R3
 
 ; ------------------------------ Datensection / Variablen -----------------------------------		
-
 	AREA	daten,	data
 COUNTER 	DCB	0
+ARRAY		DCB 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x27, 0x7F, 0x6F
 	
 ; ------------------------------- Codesection / Programm ------------------------------------
 	AREA	main_s, code
@@ -196,54 +196,54 @@ nullen
 	
 ; -------------------- Defaultzustand ------------------------------
 default
-	LDR R0, =GPIOA_ODR
-	STR EINER, [R0]
+	ldr R0, =GPIOA_ODR
+	str EINER, [R0]
 	
 	; 5ms warten -> 0.005s
-	MOV R8, #5
-	BL  up_delay
+	mov R8, #5
+	bl up_delay
 	
-	LDR R0, =GPIOA_ODR
-	STR ZEHNER, [R0]
+	ldr R0, =GPIOA_ODR
+	str ZEHNER, [R0]
 	
 	; 5ms warten -> 0.005s
-	MOV R8, #5
-	BL  up_delay
+	mov R8, #5
+	bl up_delay
 	
-	LDR	R0, =GPIOC_IDR 	; Lesen des Ports C
-	LDR R1, [R0]	
+	ldr	R0, =GPIOC_IDR 	; Lesen des Ports C
+	ldr R1, [R0]	
 	
-	CMP R1, #6          ; Ist Bit PC0 gesetzt? -> Start/Weiter
-	BNE default
+	cmp R1, #6          ; Ist Bit PC0 gesetzt? -> Start/Weiter
+	bne default
 	
 	
 ; --------------------- Endlosschleife ------------------------------
 
 loop 
-	LDR R0, =GPIOA_ODR
-	STR EINER, [R0]
+	ldr R0, =GPIOA_ODR
+	str EINER, [R0]
 	
 	; 5ms warten -> 0.005s
-	MOV R8, #5
-	BL  up_delay
+	mov R8, #5
+	bl  up_delay
 	
-	LDR R0, =GPIOA_ODR
-	STR ZEHNER, [R0]
+	ldr R0, =GPIOA_ODR
+	str ZEHNER, [R0]
 	
 	; 5ms warten -> 0.005s
-	MOV R8, #5
-	BL  up_delay
+	mov R8, #5
+	bl  up_delay
 	
-	LDR R0, =GPIOC_IDR 	; Lesen des Ports C
-	LDR R1, [R0]	
+	ldr R0, =GPIOC_IDR 	; Lesen des Ports C
+	ldr R1, [R0]	
 	
-	CMP R1, #6           ; Ist Bit PC0 gesetzt? -> Start/Weiter
-	BEQ zaehler
+	cmp R1, #6           ; Ist Bit PC0 gesetzt? -> Start/Weiter
+	beq zaehler
 	
-	CMP R1, #3           ; Ist Bit PC2 gesetzt? -> Reset
-	BEQ nullen
+	cmp R1, #3           ; Ist Bit PC2 gesetzt? -> Reset
+	beq nullen
 	
-	B	loop	
+	b	loop	
 
 ; ------------------------- Interrupt Handler -------------------------
 
@@ -282,149 +282,149 @@ zaehler
 	MOV R6, #0
 	
 schleife	
-	LDR R0, =GPIOA_ODR
-	STR EINER, [R0]
+	ldr R0, =GPIOA_ODR
+	str EINER, [R0]
 	
-	; 5ms warten -> 0.05s
-	MOV R8, #5
-	BL  up_delay
+	; 5ms warten -> 0.005s
+	mov R8, #5
+	bl  up_delay
 	
-	LDR R0, =GPIOA_ODR
-	STR ZEHNER, [R0]
+	ldr R0, =GPIOA_ODR
+	str ZEHNER, [R0]
 	
-	; 0.5ms warten -> 0.05s
-	MOV R8, #5
-	BL  up_delay
+	; 5ms warten -> 0.005s
+	mov R8, #5
+	bl  up_delay
 	
-	ADD R6,R6,#1
-	CMP R6, #10
-	BNE schleife
+	add R6,R6,#1
+	cmp R6, #10
+	bne schleife
 
-	LDR R0, =GPIOC_IDR 	 ; Lesen des Ports C
-	LDR R1, [R0]
-	CMP R1, #5           ; Ist Bit PC1 gesetzt? -> Stop
-	BEQ loop
+	ldr R0, =GPIOC_IDR 	 ; Lesen des Ports C
+	ldr R1, [R0]
+	cmp R1, #5           ; Ist Bit PC1 gesetzt? -> Stop
+	beq loop
 	
-	LDR R0, =GPIOA_ODR
-	LDR R1, [R0]
+	ldr R0, =GPIOA_ODR
+	ldr R1, [R0]
 	
-	CMP EINER, #0x6F     ; 9 ? wenn ja -> 0
-	BNE nicht_neun
-	MOV EINER, #0x3F	
-	B nicht_null
+	cmp EINER, #0x6F     ; 9 ? wenn ja -> 0
+	bne nicht_neun
+	mov EINER, #0x3F	
+	b	nicht_null
 nicht_neun
 
-	CMP EINER, #0x7F     ; 8 ? wenn ja -> 9
-	BNE nicht_acht
-	MOV EINER, #0x6F
+	cmp EINER, #0x7F     ; 8 ? wenn ja -> 9
+	bne nicht_acht
+	mov EINER, #0x6F
 nicht_acht
 
-	CMP EINER, #0x27     ; 7 ? wenn ja -> 8
-	BNE nicht_sieben
-	MOV EINER, #0x7F
+	cmp EINER, #0x27     ; 7 ? wenn ja -> 8
+	bne nicht_sieben
+	mov EINER, #0x7F
 nicht_sieben
 
-	CMP EINER, #0x7D     ; 6 ? wenn ja -> 7
-	BNE nicht_sechs
-	MOV EINER, #0x27
+	cmp EINER, #0x7D     ; 6 ? wenn ja -> 7
+	bne nicht_sechs
+	mov EINER, #0x27
 nicht_sechs
 
-	CMP EINER, #0x6D     ; 5 ? wenn ja -> 6
-	BNE nicht_fuenf
-	MOV EINER, #0x7D
+	cmp EINER, #0x6D     ; 5 ? wenn ja -> 6
+	bne nicht_fuenf
+	mov EINER, #0x7D
 nicht_fuenf
 
-	CMP EINER, #0x66     ; 4 ? wenn ja -> 5
-	BNE nicht_vier
-	MOV EINER, #0x6D
+	cmp EINER, #0x66     ; 4 ? wenn ja -> 5
+	bne nicht_vier
+	mov EINER, #0x6D
 nicht_vier
 
-	CMP EINER, #0x4F     ; 3 ? wenn ja -> 4
-	BNE nicht_drei
-	MOV EINER, #0x66
+	cmp EINER, #0x4F     ; 3 ? wenn ja -> 4
+	bne nicht_drei
+	mov EINER, #0x66
 nicht_drei
 
-	CMP EINER, #0x5B     ; 2 ? wenn ja -> 3
-	BNE nicht_zwei
-	MOV EINER, #0x4F
+	cmp EINER, #0x5B     ; 2 ? wenn ja -> 3
+	bne nicht_zwei
+	mov EINER, #0x4F
 nicht_zwei
 
-	CMP EINER, #0x06     ; 1 ? wenn ja -> 2
-	BNE nicht_eins
-	MOV EINER, #0x5B
+	cmp EINER, #0x06     ; 1 ? wenn ja -> 2
+	bne nicht_eins
+	mov EINER, #0x5B
 nicht_eins
 
-	CMP EINER, #0x3F     ; 0 ? wenn ja -> 9
-	BNE nicht_null
-	MOV EINER, #0x06
-	STR EINER, [R0]
+	cmp EINER, #0x3F     ; 0 ? wenn ja -> 9
+	bne nicht_null
+	mov EINER, #0x06
+	str EINER, [R0]
 						 ;Zehnerstelle+1
-	B 	zeta 
+	b 	zeta 
 	
 nicht_null
 
-	STR EINER, [R0]
+	str EINER, [R0]
 
 	b 	z_nicht_null
 	
 ; --------------------- Zehnerstelle ----------------------------
 zeta ;Zehnerstelle 
 
-	CMP ZEHNER, #0xEF     ; 9 ? wenn ja -> 0
-	BNE z_nicht_neun
-	MOV ZEHNER, #0xBF	
-	B z_nicht_null
+	cmp ZEHNER, #0xEF     ; 9 ? wenn ja -> 0
+	bne z_nicht_neun
+	mov ZEHNER, #0xBF	
+	b 	z_nicht_null
 z_nicht_neun
 
-	CMP ZEHNER, #0xFF     ; 8 ? wenn ja -> 9
-	BNE z_nicht_acht
-	MOV ZEHNER, #0xEF
+	cmp ZEHNER, #0xFF     ; 8 ? wenn ja -> 9
+	bne z_nicht_acht
+	mov ZEHNER, #0xEF
 z_nicht_acht
 
-	CMP ZEHNER, #0xA7     ; 7 ? wenn ja -> 8
-	BNE z_nicht_sieben
-	MOV ZEHNER, #0xFF
+	cmp ZEHNER, #0xA7     ; 7 ? wenn ja -> 8
+	bne z_nicht_sieben
+	mov ZEHNER, #0xFF
 z_nicht_sieben
 
-	CMP ZEHNER, #0xFD     ; 6 ? wenn ja -> 7
-	BNE z_nicht_sechs
-	MOV ZEHNER, #0xA7
+	cmp ZEHNER, #0xFD     ; 6 ? wenn ja -> 7
+	bne z_nicht_sechs
+	mov ZEHNER, #0xA7
 z_nicht_sechs
 
-	CMP ZEHNER, #0xED     ; 5 ? wenn ja -> 6
-	BNE z_nicht_fuenf
-	MOV ZEHNER, #0xFD
+	cmp ZEHNER, #0xED     ; 5 ? wenn ja -> 6
+	bne z_nicht_fuenf
+	mov ZEHNER, #0xFD
 z_nicht_fuenf
 
-	CMP ZEHNER, #0xE6     ; 4 ? wenn ja -> 5
-	BNE z_nicht_vier
-	MOV ZEHNER, #0xED
+	cmp ZEHNER, #0xE6     ; 4 ? wenn ja -> 5
+	bne z_nicht_vier
+	mov ZEHNER, #0xED
 z_nicht_vier
 
-	CMP ZEHNER, #0xCF     ; 3 ? wenn ja -> 4
-	BNE z_nicht_drei
-	MOV ZEHNER, #0xE6
+	cmp ZEHNER, #0xCF     ; 3 ? wenn ja -> 4
+	bne z_nicht_drei
+	mov ZEHNER, #0xE6
 z_nicht_drei
 
-	CMP ZEHNER, #0xDB     ; 2 ? wenn ja -> 3
-	BNE z_nicht_zwei
-	MOV ZEHNER, #0xCF
+	cmp ZEHNER, #0xDB     ; 2 ? wenn ja -> 3
+	bne z_nicht_zwei
+	mov ZEHNER, #0xCF
 z_nicht_zwei
 
-	CMP ZEHNER, #0x86     ; 1 ? wenn ja -> 2
-	BNE z_nicht_eins
-	MOV ZEHNER, #0xDB
+	cmp ZEHNER, #0x86     ; 1 ? wenn ja -> 2
+	bne z_nicht_eins
+	mov ZEHNER, #0xDB
 z_nicht_eins
 
-	CMP ZEHNER, #0xBF     ; 0 ? wenn ja -> 1
-	BNE z_nicht_null
-	MOV ZEHNER, #0x86
+	cmp ZEHNER, #0xBF     ; 0 ? wenn ja -> 1
+	bne z_nicht_null
+	mov ZEHNER, #0x86
 	
 z_nicht_null
 
-	STR ZEHNER, [R0]
+	str ZEHNER, [R0]
 	
-	B 	zaehler
+	b	zaehler
 
 	ENDP				
 END
